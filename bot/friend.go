@@ -65,6 +65,7 @@ func friend(action int, username string, id string, client *http.Client, message
 	friend_post_request.Header.Set("Origin", "https://www.101weiqi.com")
 	friend_post_request.Header.Set("Pragma", "no-cache")
 	friend_post_request.Header.Set("Priority", "u=1, i")
+	friend_post_request.Header.Set("Referer", "https://www.101weiqi.com/")
 	friend_post_request.Header.Set("Sec-Fetch-Mode", "cors")
 	friend_post_request.Header.Set("Sec-Fetch-Site", "same-origin")
 	friend_post_request.Header.Set("X-Requested-With", "XMLHttpRequest")
