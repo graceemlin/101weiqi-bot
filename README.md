@@ -1,2 +1,3 @@
 # 101weiqi-bot
-discord bot for scraping 101weiqi profile data
+discord bot for scraping 101weiqi profile data\
+(this is a rough draft, pls excuse the disaster code)
