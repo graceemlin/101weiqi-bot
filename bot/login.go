@@ -3,7 +3,6 @@ package bot
 import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
-	"github.com/bwmarrin/discordgo"
 	"log"
 	"net/http"
 	"net/url"
@@ -12,13 +11,15 @@ import (
 
 var USERNAME, PASSWORD string
 
-func login(client *http.Client, message *discordgo.MessageCreate, session *discordgo.Session) {	
+func login() {
+	// get login page
 	login_get_response, login_get_error := client.Get(LoginURL)
 	if login_get_error != nil {
 		log.Fatal("Error fetching login page:", login_get_error)
 	}
 	defer login_get_response.Body.Close()
 
+	// find csrftoken
 	var csrftoken string
 	for _, cookie := range login_get_response.Cookies() {
 		if cookie.Name == "csrftoken" {
@@ -31,6 +32,7 @@ func login(client *http.Client, message *discordgo.MessageCreate, session *disco
 		return
 	}
 
+	// parse login page html
 	login_html, login_html_error := goquery.NewDocumentFromReader(login_get_response.Body)
 	if login_html_error != nil {
 		log.Fatal("Error parsing login HTML:", login_html_error)
@@ -40,10 +42,11 @@ func login(client *http.Client, message *discordgo.MessageCreate, session *disco
 	// extract the csrfmiddlewaretoken
 	csrfmiddlewaretoken, found_csrfmiddlewaretoken := login_html.Find("[name=csrfmiddlewaretoken]").Attr("value")
 	if found_csrfmiddlewaretoken == false {
-		session.ChannelMessageSend(message.ChannelID, "Could not find csrfmiddlewaretoken on login page.")
+		log.Fatal("Could not find csrfmiddlewaretoken on login page.")
 		return
 	}
-	
+
+	// create form data for login POST
 	formData := url.Values {
 		"csrfmiddlewaretoken": {csrfmiddlewaretoken},
 		"source":              {"index_nav"},
@@ -51,6 +54,7 @@ func login(client *http.Client, message *discordgo.MessageCreate, session *disco
 		"form_password":       {PASSWORD},
 	}
 
+	// construct login POST request
 	login_post_request, login_post_request_creation_error := http.NewRequest(http.MethodPost, LoginURL, strings.NewReader(formData.Encode()))
 	if login_post_request_creation_error != nil {
 		log.Fatal("Error creating login POST request:", login_post_request_creation_error)
@@ -71,7 +75,8 @@ func login(client *http.Client, message *discordgo.MessageCreate, session *disco
 	login_post_request.Header.Set("Sec-Fetch-Site", "same-origin")
 	login_post_request.Header.Set("Sec-Fetch-User", "?1")
 	login_post_request.Header.Set("Upgrade-Insecure-Requests", "1")
-	
+
+	// send login POST request
 	login_post_response, login_post_error := client.Do(login_post_request)
 	if login_post_error != nil {
                 log.Fatal("Login POST request failed.", nil)           
