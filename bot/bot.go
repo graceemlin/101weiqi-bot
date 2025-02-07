@@ -68,7 +68,7 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 			log.Fatal("Error accessing 101weiqi homepage:", home_url_object_error)
 		}
 
-		// check for an active session
+		// cookie check for an active session
 		cookies := client.Jar.Cookies(home_url_object)
 		session_active := false
 		for _, cookie := range cookies {
