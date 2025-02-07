@@ -13,6 +13,23 @@ import (
 )
 
 var BotToken, LoginURL, HomeURL string
+var client *http.Client
+
+func Init() {
+	// create a cookiejar to store cookies
+	jar, jar_error := cookiejar.New(nil)
+	if jar_error != nil {
+		log.Fatal("Error creating cookiejar:", jar_error)
+	}
+
+	// set Jar field of Client struct to newly created cookiejar
+	client = &http.Client{
+		Jar: jar,
+	}
+	
+	// initial login
+	login()
+}
 
 func Run() {
 	// create a discord session
@@ -21,13 +38,14 @@ func Run() {
 		log.Fatal("Error creating session:", session_error)
 	}
 
-	// add a event handler
+	// add an event handler
 	session.AddHandler(newMessage)
 	session.Identify.Intents = discordgo.IntentsGuilds | discordgo.IntentsGuildMessages | discordgo.IntentsMessageContent
 
 	// open session
 	session.Open()
-	defer session.Close() // close session, after function termination
+	// close session, after function termination
+	defer session.Close()
 
 	// keep bot running until there is an OS interruption (ctrl + C)
 	fmt.Println("Bot running....")
@@ -42,46 +60,34 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		return
 	}
 
-	// create a cookiejar to store cookies
-	jar, jar_error := cookiejar.New(nil)
-	if jar_error != nil {
-		log.Fatal("Error creating cookiejar:", jar_error)
-	}
-	
-	client := &http.Client{
-		Jar: jar,
-	}
-
-	//initial login
-	login(client, message, session)
-	
-	home_url_object, home_url_object_error := url.Parse(HomeURL)
-	if home_url_object_error != nil {
-		log.Fatal("Error accessing 101weiqi homepage:", home_url_object_error)
-	}
-	
-	cookies := jar.Cookies(home_url_object)
-		
 	switch {
 	case strings.Contains(message.Content, "!profile"):
+		// parse home url for cookie checks
+		home_url_object, home_url_object_error := url.Parse(HomeURL)
+		if home_url_object_error != nil {
+			log.Fatal("Error accessing 101weiqi homepage:", home_url_object_error)
+		}
+
+		// check for an active session
+		cookies := client.Jar.Cookies(home_url_object)
 		session_active := false
 		for _, cookie := range cookies {
+			fmt.Println(cookie.Value)
 			if cookie.Name == "sessionid" {				
 				session_active = true
 			}
 		}
 
+		// restart session if needed
 		if (session_active == false) {
+			// note when new sessions are needed
 			fmt.Println("new session")
-			login(client, message, session)
-			
-			home_url_object_new, home_url_object_new_error := url.Parse(HomeURL)
-			if home_url_object_new_error != nil {
-				log.Fatal("Error accessing 101weiqi homepage for new session:", home_url_object_new_error)
-			}
 
-			cookies = jar.Cookies(home_url_object_new)
+			// login
+			login()
 
+			// verify login success
+			cookies = client.Jar.Cookies(home_url_object)
 			login_successful := false
 			for _, cookie := range cookies {
 				if cookie.Name == "sessionid" {				
@@ -90,12 +96,13 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 				}
 			}
 
+			// if login is unsuccessful, terminate
 			if (login_successful == false) {
 				session.ChannelMessageSend(message.ChannelID, "the cookies aren't cookie-ing, please fix me :(")
 				log.Fatal(nil)
 			}		
 		}
 		
-		getProfile(client, message, session)		
+		getProfile(message, session)		
 	}
 }
