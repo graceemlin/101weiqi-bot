@@ -1,4 +1,4 @@
-ackage bot
+package bot
 
 import (
 	"fmt"
