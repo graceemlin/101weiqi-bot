@@ -11,7 +11,7 @@ import (
 	"regexp"
 )
 
-func getProfile(message *discordgo.MessageCreate, session *discordgo.Session) {
+func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 	if strings.HasPrefix(message.Content, "!profile") {
 		// split into command and username
 		parts := strings.Split(message.Content, " ")
@@ -30,7 +30,7 @@ func getProfile(message *discordgo.MessageCreate, session *discordgo.Session) {
 			return
 		}
 
-		// get profile
+		// GET profile
 		profile_get_response, profile_get_response_error := client.Get(profileURL)
 		if profile_get_response_error != nil {
 			log.Println("Error fetching URL:", profile_get_response_error)
@@ -41,7 +41,7 @@ func getProfile(message *discordgo.MessageCreate, session *discordgo.Session) {
 		
 		if profile_get_response.StatusCode != 200 {
 			log.Printf("Status code error: %d %s", profile_get_response.StatusCode, profile_get_response.Status)
-			session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("Profile not found or website error: %d", profile_get_response.StatusCode))
+			session.ChannelMessageSend(message.ChannelID, fmt.Sprintf("101weiqi profile for the user \"%s\" not found. Please check spelling/capitalization.", user))
 			return
 		}
 
@@ -62,20 +62,21 @@ func getProfile(message *discordgo.MessageCreate, session *discordgo.Session) {
 		// friend user
 		friend(1, user, id, message, session)
 
+		stats_border := "===================================================="
 		// start the results code block
-		results := fmt.Sprintf("```User: %s\n\nSkill Test Results:\n", user)
+		results := fmt.Sprintf("```diff\n%s\nSkill Test Results: %s\n%s\n", stats_border, user, stats_border)
 
 		// initialize tracked stats
 		var placements, perfect int
 		best := "N/A"
 
-		// get stats per level
+		// fetch stats per level
 		leaderboardURL := "https://www.101weiqi.com/guan/pop/"
 		for i := 1; i <= 22; i++ {
-			// construct URL for current level
+			// construct temp URL for current level
 			tempURL := leaderboardURL + strconv.Itoa(i) + "/"
 
-			// get temp urls
+			// GET temp URL
 			temp_url_get_response, temp_url_get_response_error := client.Get(tempURL)
 			if temp_url_get_response_error != nil {
 				log.Fatal("Error fetching temp URL:", temp_url_get_response_error)
@@ -87,14 +88,14 @@ func getProfile(message *discordgo.MessageCreate, session *discordgo.Session) {
 			}
 			defer temp_url_get_response.Body.Close()
 
-			// temp url body as text
+			// temp URL body as text
 			temp_url_get_response_body, temp_url_get_response_body_read_error := ioutil.ReadAll(temp_url_get_response.Body)
 			if temp_url_get_response_body_read_error != nil {
 				log.Fatal(temp_url_get_response_body_read_error)
 			}
 			temp_url_get_response_body_text := string(temp_url_get_response_body)
 
-			// finds user data for current level from temp url body
+			// finds user data for current level from temp URL body
 			regex_for_user := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user))
 			match := regex_for_user.FindStringSubmatch(temp_url_get_response_body_text)
 
@@ -150,7 +151,7 @@ func getProfile(message *discordgo.MessageCreate, session *discordgo.Session) {
 					placements += 1
 					
 					// maintain alignment
-					for i := len(time_spent); i < 3; i++ {
+					for i := len(time_spent); i <= 3; i++ {
 						results += " "
 					}
 
@@ -168,10 +169,13 @@ func getProfile(message *discordgo.MessageCreate, session *discordgo.Session) {
 
 
 		// add tracked stats to result
+		results += stats_border
 		results += "\n"
 		results += "Highest Level Passed: " + best + "\n"
 		results += "Perfect Scores: " + strconv.Itoa(perfect) + "\n"
 		results += "Leaderboard Placements: " + strconv.Itoa(placements) + "\n"
+		results += stats_border
+		results += "\n"
 		results += "```"
 
 		// print result
