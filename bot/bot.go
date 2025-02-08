@@ -12,7 +12,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-var BotToken, LoginURL, HomeURL string
+var BOTTOKEN, LOGINURL, HOMEURL string
 var client *http.Client
 
 func Init() {
@@ -33,7 +33,7 @@ func Init() {
 
 func Run() {
 	// create a discord session
-	session, session_error := discordgo.New("Bot " + BotToken)
+	session, session_error := discordgo.New("Bot " + BOTTOKEN)
 	if session_error != nil {
 		log.Fatal("Error creating session:", session_error)
 	}
@@ -63,16 +63,15 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 	switch {
 	case strings.Contains(message.Content, "!profile"):
 		// parse home url for cookie checks
-		home_url_object, home_url_object_error := url.Parse(HomeURL)
+		home_url_object, home_url_object_error := url.Parse(HOMEURL)
 		if home_url_object_error != nil {
-			log.Fatal("Error accessing 101weiqi homepage:", home_url_object_error)
+			log.Fatal("Error creating 101weiqi homepage URL object", home_url_object_error)
 		}
 
-		// cookie check for an active session
+		// check for an active session
 		cookies := client.Jar.Cookies(home_url_object)
 		session_active := false
 		for _, cookie := range cookies {
-			fmt.Println(cookie.Value)
 			if cookie.Name == "sessionid" {				
 				session_active = true
 			}
@@ -92,7 +91,6 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 			for _, cookie := range cookies {
 				if cookie.Name == "sessionid" {				
 					login_successful = true
-					fmt.Println(cookie.Value)
 				}
 			}
 
@@ -103,6 +101,6 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 			}		
 		}
 		
-		getProfile(message, session)		
+		get_stats(message, session)		
 	}
 }
