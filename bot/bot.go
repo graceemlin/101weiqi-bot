@@ -27,12 +27,12 @@ func Init() {
 		Jar: jar,
 	}
 	
-	// initial login
+	// initial 101weiqi login
 	login()
 }
 
 func Run() {
-	// create a discord session
+	// create a Discord session
 	session, session_error := discordgo.New("Bot " + BOTTOKEN)
 	if session_error != nil {
 		log.Fatal("Error creating session:", session_error)
@@ -80,10 +80,10 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		// note when new sessions are needed
 		fmt.Println("new session")
 		
-		// login
+		// login to 101weiqi
 		login()
 		
-		// verify login success
+		// verify 101weiqi login success
 		cookies = client.Jar.Cookies(home_url_object)
 		login_successful := false
 		for _, cookie := range cookies {
@@ -92,7 +92,7 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 			}
 		}
 		
-		// if login is unsuccessful, terminate
+		// if 101weiqi login is unsuccessful, terminate
 		if (login_successful == false) {
 			session.ChannelMessageSend(message.ChannelID, "the cookies aren't cookie-ing, please fix me :(")
 			log.Fatal(nil)
@@ -101,6 +101,8 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 	
 	switch {
 	case strings.Contains(message.Content, "!profile"):		
-		get_stats(message, session)		
+		get_stats(message, session)
+	case strings.Contains(message.Content, "!compare"):
+		get_stats(message, session)
 	}
 }
