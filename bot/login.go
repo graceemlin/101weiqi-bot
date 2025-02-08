@@ -32,7 +32,7 @@ func login() {
 		return
 	}
 
-	// parse login page html
+	// parse login page HTML
 	login_html, login_html_error := goquery.NewDocumentFromReader(login_get_response.Body)
 	if login_html_error != nil {
 		log.Fatal("Error parsing login HTML:", login_html_error)
