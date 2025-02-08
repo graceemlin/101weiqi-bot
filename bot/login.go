@@ -1,4 +1,4 @@
-package bot
+ackage bot
 
 import (
 	"fmt"
@@ -12,8 +12,8 @@ import (
 var USERNAME, PASSWORD string
 
 func login() {
-	// get login page
-	login_get_response, login_get_error := client.Get(LoginURL)
+	// GET login page
+	login_get_response, login_get_error := client.Get(LOGINURL)
 	if login_get_error != nil {
 		log.Fatal("Error fetching login page:", login_get_error)
 	}
@@ -55,7 +55,7 @@ func login() {
 	}
 
 	// construct login POST request
-	login_post_request, login_post_request_creation_error := http.NewRequest(http.MethodPost, LoginURL, strings.NewReader(formData.Encode()))
+	login_post_request, login_post_request_creation_error := http.NewRequest(http.MethodPost, LOGINURL, strings.NewReader(formData.Encode()))
 	if login_post_request_creation_error != nil {
 		log.Fatal("Error creating login POST request:", login_post_request_creation_error)
 	}
@@ -83,9 +83,9 @@ func login() {
         }
 	defer login_post_response.Body.Close()
 	
-	if login_post_response.Request.URL.String() == HomeURL {
+	if login_post_response.Request.URL.String() == HOMEURL {
 		fmt.Println("Successfully logged in!")
-	} else if login_post_response.Request.URL.String() == LoginURL {
+	} else if login_post_response.Request.URL.String() == LOGINURL {
 		log.Fatal("Failed to login. Check your username/password")
 	} else {
 		log.Fatal("Failed to login. Possible throttle on POSTs from this account")
