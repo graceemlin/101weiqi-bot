@@ -10,12 +10,13 @@ import (
 	"strings"
 )
 
-func friend(action int, username string, id string, message *discordgo.MessageCreate, session *discordgo.Session) {
-	// construct urls
-	friendURL := "https://www.101weiqi.com/u/" + username + "/"
-	attionURL := "https://www.101weiqi.com/attionuser/"
+var ATTIONURL string
 
-	// get friend profile
+func friend(action int, user string,id string, message *discordgo.MessageCreate, session *discordgo.Session) {
+	// construct friend url
+	friendURL := fmt.Sprintf("https://www.101weiqi.com/u/%s/", user)
+
+	// GET friend profile
 	friend_get_response, friend_get_error := client.Get(friendURL)
 	if friend_get_error != nil {
 		log.Fatal("Error fetching login page:", friend_get_error)
@@ -58,7 +59,7 @@ func friend(action int, username string, id string, message *discordgo.MessageCr
 	}
 
 	// construct friend POST request
-	friend_post_request, friend_post_error := http.NewRequest(http.MethodPost, attionURL, strings.NewReader(formData.Encode()))
+	friend_post_request, friend_post_error := http.NewRequest(http.MethodPost, ATTIONURL, strings.NewReader(formData.Encode()))
 	if friend_post_error != nil {
 		log.Fatal("Error creating friend POST request:", friend_post_error)
 	}
@@ -81,9 +82,9 @@ func friend(action int, username string, id string, message *discordgo.MessageCr
                 log.Fatal("Friend POST request failed.")           
         } else {
 		if (action == 1) {
-			fmt.Println("Successfully friended!")
+			fmt.Printf("Successfully friended %s!\n", user)
 		} else {
-			fmt.Println("Successfully unfriended!")
+			fmt.Printf("Successfully unfriended! %s\n", user)
 		}
 	}
 	
