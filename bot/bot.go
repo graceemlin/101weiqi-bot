@@ -60,47 +60,47 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		return
 	}
 
-	switch {
-	case strings.Contains(message.Content, "!profile"):
-		// parse home url for cookie checks
-		home_url_object, home_url_object_error := url.Parse(HOMEURL)
-		if home_url_object_error != nil {
-			log.Fatal("Error creating 101weiqi homepage URL object", home_url_object_error)
+	// parse home url for cookie checks
+	home_url_object, home_url_object_error := url.Parse(HOMEURL)
+	if home_url_object_error != nil {
+		log.Fatal("Error creating 101weiqi homepage URL object", home_url_object_error)
+	}
+	
+	// check for an active session
+	cookies := client.Jar.Cookies(home_url_object)
+	session_active := false
+	for _, cookie := range cookies {
+		if cookie.Name == "sessionid" {				
+			session_active = true
 		}
-
-		// check for an active session
-		cookies := client.Jar.Cookies(home_url_object)
-		session_active := false
+	}
+	
+	// restart session if needed
+	if (session_active == false) {
+		// note when new sessions are needed
+		fmt.Println("new session")
+		
+		// login
+		login()
+		
+		// verify login success
+		cookies = client.Jar.Cookies(home_url_object)
+		login_successful := false
 		for _, cookie := range cookies {
 			if cookie.Name == "sessionid" {				
-				session_active = true
+				login_successful = true
 			}
-		}
-
-		// restart session if needed
-		if (session_active == false) {
-			// note when new sessions are needed
-			fmt.Println("new session")
-
-			// login
-			login()
-
-			// verify login success
-			cookies = client.Jar.Cookies(home_url_object)
-			login_successful := false
-			for _, cookie := range cookies {
-				if cookie.Name == "sessionid" {				
-					login_successful = true
-				}
-			}
-
-			// if login is unsuccessful, terminate
-			if (login_successful == false) {
-				session.ChannelMessageSend(message.ChannelID, "the cookies aren't cookie-ing, please fix me :(")
-				log.Fatal(nil)
-			}		
 		}
 		
+		// if login is unsuccessful, terminate
+		if (login_successful == false) {
+			session.ChannelMessageSend(message.ChannelID, "the cookies aren't cookie-ing, please fix me :(")
+			log.Fatal(nil)
+		}		
+	}
+	
+	switch {
+	case strings.Contains(message.Content, "!profile"):		
 		get_stats(message, session)		
 	}
 }
