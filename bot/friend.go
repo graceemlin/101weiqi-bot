@@ -39,7 +39,7 @@ func friend(action int, user string,id string, message *discordgo.MessageCreate,
 		log.Fatal("csrftoken not found on friend's profile page", nil)
 	}
 
-	// parse friend profile html
+	// parse friend profile HTML
 	friend_html, friend_html_error := goquery.NewDocumentFromReader(friend_get_response.Body)
 	if friend_html_error != nil {
 		log.Fatal("Error parsing HTML:", friend_html_error)
