@@ -100,9 +100,9 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 	}
 	
 	switch {
-	case strings.Contains(message.Content, "!profile"):		
+	case strings.HasPrefix(message.Content, "!profile"):		
 		get_stats(message, session)
-	case strings.Contains(message.Content, "!compare"):
+	case strings.HasPrefix(message.Content, "!compare"):
 		get_stats(message, session)
 	}
 }
