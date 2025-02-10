@@ -49,17 +49,17 @@ func login() {
 	// create form data for login POST
 	formData := url.Values {
 		"csrfmiddlewaretoken": {csrfmiddlewaretoken},
-		"source":              {"index_nav"},
-		"form_username":       {USERNAME},
-		"form_password":       {PASSWORD},
-	}
-
+			"source":              {"index_nav"},
+			"form_username":       {USERNAME},
+			"form_password":       {PASSWORD},
+		}
+	
 	// construct login POST request
 	login_post_request, login_post_request_creation_error := http.NewRequest(http.MethodPost, LOGINURL, strings.NewReader(formData.Encode()))
 	if login_post_request_creation_error != nil {
 		log.Fatal("Error creating login POST request:", login_post_request_creation_error)
 	}
-
+	
 	login_post_request.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7")
 	login_post_request.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
 	login_post_request.Header.Set("Accept-Language", "en-US,en;q=0.9")	
@@ -75,7 +75,7 @@ func login() {
 	login_post_request.Header.Set("Sec-Fetch-Site", "same-origin")
 	login_post_request.Header.Set("Sec-Fetch-User", "?1")
 	login_post_request.Header.Set("Upgrade-Insecure-Requests", "1")
-
+	
 	// send login POST request
 	login_post_response, login_post_error := client.Do(login_post_request)
 	if login_post_error != nil {
