@@ -38,13 +38,13 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 		// friend user
 		friend(1, user, id, message, session)
 
-		stats_border := "===================================================="
+		profile_stats_border := "===================================================="
 		// start the results code block
-		results := fmt.Sprintf("```diff\n%s\nSkill Test Results: %s\n%s\n", stats_border, user, stats_border)
+		results := fmt.Sprintf("```diff\n%s\nSkill Test Results: %s\n%s\n", profile_stats_border, user, profile_stats_border)
 
 		// initialize tracked stats
-		var placements, perfect int
-		best := "N/A"
+		var placements, perfect_scores int
+		hardest_level_passed := "N/A"
 
 		// initialize stats array
 		var user_stats[23] Statistic 
@@ -55,6 +55,8 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 
 			// converts pop level to kyu/dan ranks
 			level := pop_to_level(i)
+
+			// add current level to current line
 			current_line += level + ": " + "\t"
 			
 			// maintain alignment
@@ -62,24 +64,29 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 				current_line += " "
 			}
 
+			// fetch leaderboard text for current level
+			leaderboard_text := fetch_leaderboard(i)
+
+			// populate Statistic struct for current user and level
 			current_statistic := user_stats[i]
-			found := populate_statistic(&current_statistic, user, i)
+			found := populate_statistic(&current_statistic, user, leaderboard_text)
 			if found == false {
+				// if population fails, indicate the current level was not passed, continue to next level
 				current_line += current_statistic.Correct + "\t\t" + current_statistic.Time + "\n"
 				results += current_line
 				continue
 			}
 
-			// update the  highest level solved
-			best = level
+			// update the  highest level passed
+			hardest_level_passed = level
 			
-			// add solved count to current line, maintaining alignment
+			// add solved count to the current line, maintaining alignment
 			current_line += current_statistic.Correct + "/10 " + "\t"
 			for i := len(current_statistic.Correct); i <= 2; i++ {
 				current_line += " "
 			}
 
-			// add time_spent to result line, maintaining alignment
+			// add time spent to the result line, maintaining alignment
 			current_line += current_statistic.Time + " seconds"
 			
 			// maintain alignment
@@ -87,10 +94,12 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 				current_line += " "
 			}
 
+			// update perfect level count
 			if current_statistic.Correct == "10" {
-				perfect += 1
+				perfect_scores += 1
 			}
-			
+
+			// update leaderboard placement count, and print leaderboard text
 			if current_statistic.Leaderboard == true {
 				placements += 1
 				
@@ -103,13 +112,13 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 			results += current_line
 		}
 
-		// add tracked stats to result
-		results += stats_border
+		// add tracked stats to the result
+		results += profile_stats_border
 		results += "\n"
-		results += "Highest Level Passed: " + best + "\n"
-		results += "Perfect Scores: " + strconv.Itoa(perfect) + "\n"
+		results += "Highest Level Passed: " + hardest_level_passed + "\n"
+		results += "Perfect Scores: " + strconv.Itoa(perfect_scores) + "\n"
 		results += "Leaderboard Placements: " + strconv.Itoa(placements) + "\n"
-		results += stats_border
+		results += profile_stats_border
 		results += "\n"
 		results += "```"
 
@@ -118,10 +127,6 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 		if print_result_error != nil {
 			log.Fatal("Error printing results:", print_result_error)
 		}
-
-		// unfriend user
-		// friend(0, user, id, message, session)
-		
 	} else if strings.HasPrefix(message.Content, "!compare") {
 		// split into command and usernames
 		parts := strings.Split(message.Content, " ")
@@ -145,16 +150,19 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 		friend(1, user1, id1, message, session)
 		friend(1, user2, id2, message, session)
 
+		// set border string
 		compare_border := "========================================================="
+		
 		// start the results code block
 		compare_results := fmt.Sprintf("```diff\n%s\nSkill Test Comparison: %s vs %s\n%s\n", compare_border, user1, user2, compare_border)
 
 		// initialize tracked stats
-		var placements1, perfect1 int
-		best1 := "N/A"
-		var placements2, perfect2 int
-		best2 := "N/A"
+		var user1_leaderboard_placements, user1_perfect_scores int
+		user1_hardest_level_passed := "N/A"
+		var user2_leaderboard_placements, user2_perfect_scores int
+		user2_hardest_level_passed := "N/A"
 
+		// initialize comparison stats
 		var wins, losses, ties, nocontest int
 		
 		// initialize stats arrays
@@ -167,6 +175,8 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 
 			// converts pop level to kyu/dan ranks
 			level := pop_to_level(i)
+
+			// add level information to the current line
 			current_line += level + ": "
 			
 			// maintain alignment
@@ -174,133 +184,150 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 				current_line += " "
 			}
 
-			statistic1 := user1_stats[i]
-			one_found := populate_statistic(&statistic1, user1, i)
-			if one_found == false {
-				current_line += statistic1.Correct + "   " + statistic1.Time + "            |"
+			// fetch leaderboard text
+			compare_leaderboard_text := fetch_leaderboard(i)
+			
+			// populate Statistic struct for user1
+			current_user1_statistic := user1_stats[i]
+			first_user_found := populate_statistic(&current_user1_statistic, user1, compare_leaderboard_text)
+			if first_user_found == false {
+				current_line += current_user1_statistic.Correct + "   " + current_user1_statistic.Time + "            |"
 			} else {
 				// update the  highest level solved
-				best1 = level
+				user1_hardest_level_passed = level
 				
 				// add solved count to current line, maintaining alignment
-				current_line += statistic1.Correct + "/10"
-				for i := len(statistic1.Correct); i <= 2; i++ {
+				current_line += current_user1_statistic.Correct + "/10"
+				for i := len(current_user1_statistic.Correct); i <= 2; i++ {
 					current_line += " "
 				}
 				
 				// add time_spent to result line, maintaining alignment
-				current_line += statistic1.Time + "s"
+				current_line += current_user1_statistic.Time + "s"
 				
 				// maintain alignment
-				for i := len(statistic1.Time); i <= 3; i++ {
+				for i := len(current_user1_statistic.Time); i <= 3; i++ {
 					current_line += " "
 				}
-				
-				if statistic1.Correct == "10" {
-					perfect1 += 1
+
+				// update user 1 perfect level count
+				if current_user1_statistic.Correct == "10" {
+					user1_perfect_scores += 1
 				}
-				
-				if statistic1.Leaderboard == true {
-					placements1 += 1
+
+				// update user 1 leaderboard placement count and add leaderboard text to current line
+				if current_user1_statistic.Leaderboard == true {
+					user1_leaderboard_placements += 1
 					
 					// add leaderboard text to results line
 					current_line += "(Top 100) |"
 				} else {
+					// maintain alignment
 					current_line += "          |"
 				}
 			}
 
-			statistic2 := user2_stats[i]
-			two_found := populate_statistic(&statistic2, user2, i)
-			if two_found == false {
-				current_line += " " + statistic2.Correct + "   " + statistic2.Time + "        "
+			// populate Statistic struct for user2
+			current_user2_statistic := user2_stats[i]
+			second_user_found := populate_statistic(&current_user2_statistic, user2, compare_leaderboard_text)
+			if second_user_found == false {
+				current_line += " " + current_user2_statistic.Correct + "   " + current_user2_statistic.Time + "        "
 			} else {
 				// update the  highest level solved
-				best2 = level
+				user2_hardest_level_passed = level
 				
 				// add solved count to current line, maintaining alignment
-				current_line += " "+ statistic2.Correct + "/10"
-				for i := len(statistic2.Correct); i <= 2; i++ {
+				current_line += " "+ current_user2_statistic.Correct + "/10"
+				for i := len(current_user2_statistic.Correct); i <= 2; i++ {
 					current_line += " "
 				}
 				
 				// add time_spent to result line, maintaining alignment
-				current_line += statistic2.Time + "s"
+				current_line += current_user2_statistic.Time + "s"
 				
 				// maintain alignment
-				for i := len(statistic2.Time); i <= 3; i++ {
+				for i := len(current_user2_statistic.Time); i <= 3; i++ {
 					current_line += " "
 				}
-				
-				if statistic2.Correct == "10" {
-					perfect2 += 1
+
+				// update user 2 perfect level count
+				if current_user2_statistic.Correct == "10" {
+					user2_perfect_scores += 1
 				}
 				
-				if statistic2.Leaderboard == true {
-					placements2 += 1
+				// update user 2 leaderboard placement count and add leaderboard text to current line
+				if current_user2_statistic.Leaderboard == true {
+					user2_leaderboard_placements += 1
 					
 					// add leaderboard text to results line
 					current_line += "(Top 100)"
 				}
 			}
 
-			comparison := compare_statistics(statistic1, statistic2)
+			// generate diff prefix
+			current_level_comparison := compare_statistics(current_user1_statistic, current_user2_statistic)
 
-			save := false
+			// update comparison stats
+			current_line_contains_highlight := true
 			switch {
-			case comparison == "+  ":
+			case current_level_comparison == "+  ":
 				wins += 1
-			case comparison == "-  ":
+			case current_level_comparison == "-  ":
 				losses += 1
-			case comparison == "***":
+			case current_level_comparison == "***":
 				nocontest += 1
-				save = true
-			case comparison == "!  ":
+				current_line_contains_highlight = false
+			case current_level_comparison == "!  ":
 				ties += 1
 			}
 
-			current_line = comparison + " " + current_line
+			// add diff prefix to current line
+			current_line = current_level_comparison + " " + current_line
 
-			if save == false {
-				for z := len(current_line); z < len(compare_border); z++ {
+			// maintain highlight alignment
+			if current_line_contains_highlight == true {
+				for color_alignment := len(current_line); color_alignment < len(compare_border); color_alignment++ {
 					current_line += " "
 				}
 			}
 
 			// new result line for each level
 			current_line += "\n"
-			
+
+			// add current line to result
 			compare_results += current_line
 		}
-		
+
+
+		// construct footer for tracked stats, add dividing column, maintain alignment
 		compare_results += compare_border + "\n"
-		footer1 := "Highest Level Passed: " + best1
+		footer1 := "Highest Level Passed: " + user1_hardest_level_passed
 		for pad1 := len(footer1); pad1 < 30; pad1++ {
 			footer1 += " "
 		}
-		footer1 += "| Highest Level Passed: " + best2
+		footer1 += "| Highest Level Passed: " + user2_hardest_level_passed
 		
-		footer2 := "Perfect Scores: " + strconv.Itoa(perfect1)
+		footer2 := "Perfect Scores: " + strconv.Itoa(user1_perfect_scores)
 		for pad2 := len(footer2); pad2 < 30; pad2++ {
 			footer2 += " "
 		}
-		footer2 += "| Perfect Scores: " + strconv.Itoa(perfect2)
+		footer2 += "| Perfect Scores: " + strconv.Itoa(user2_perfect_scores)
 		
-		footer3 := "Leaderboard Placements: " + strconv.Itoa(placements1)
+		footer3 := "Global Leaderboards: " + strconv.Itoa(user1_leaderboard_placements)
 		for pad3 := len(footer3); pad3 < 30; pad3++ {
 			footer3 += " "
 		}
-		footer3 += "| Leaderboard Placements: " + strconv.Itoa(placements2)
-
+		footer3 += "| Global Leaderboards: " + strconv.Itoa(user2_leaderboard_placements)
 		compare_results += footer1 + "\n" + footer2 + "\n" + footer3 + "\n"
 		compare_results += compare_border + "\n"
-		
+
+		// print comparison stats
 		compare_results += "+ Wins: " + strconv.Itoa(wins) + "\n"
 		compare_results += "- Losses: " + strconv.Itoa(losses) + "\n"
 		compare_results += "! Ties: " + strconv.Itoa(ties) + "\n"
-		compare_results += "*** No Contest: " + strconv.Itoa(nocontest)
-		
-		compare_results += "\n"
+		compare_results += "*** No Contest: " + strconv.Itoa(nocontest) + "\n"
+
+		// end codeblock
 		compare_results += "```"
 
 		// print result
@@ -308,42 +335,48 @@ func get_stats(message *discordgo.MessageCreate, session *discordgo.Session) {
 		if print_result_error != nil {
 			log.Fatal("Error printing results:", print_result_error)
 		}
-
 	}
-
+	
 	return
 }
 
-func compare_statistics(user1 Statistic, user2 Statistic) (string) {
-	if (user1.Correct == "N/A" && user2.Correct == "N/A") {
+func compare_statistics(stat1 Statistic, stat2 Statistic) string {
+	// non-numeric comparison handling
+	if (stat1.Correct == "N/A" && stat2.Correct == "N/A") {
 		return "***"
-	} else if user1.Correct == "N/A" {
+	} else if stat1.Correct == "N/A" {
 		return "-  "
-	} else if user2.Correct == "N/A" {
+	} else if stat2.Correct == "N/A" {
 		return "+  "
 	}
 
-	time1, time_err1 := strconv.Atoi(user1.Time)
+	// convert compared stats from strings to ints for numeric comparisons
+	time1, time_err1 := strconv.Atoi(stat1.Time)
 	if time_err1 != nil {
             log.Fatal("Error: the math isn't mathing", time_err1)
         }
 	
-	time2, time_err2 := strconv.Atoi(user2.Time)
+	time2, time_err2 := strconv.Atoi(stat2.Time)
 	if time_err2 != nil {
             log.Fatal("Error: the math isn't mathing", time_err2)
         }
 
-	correct1, correct_err1 := strconv.Atoi(user1.Correct)
+	correct1, correct_err1 := strconv.Atoi(stat1.Correct)
 	if correct_err1 != nil {
             log.Fatal("Error: the math isn't mathing", correct_err1)
         }
 	
-	correct2, correct_err2 := strconv.Atoi(user2.Correct)
+	correct2, correct_err2 := strconv.Atoi(stat2.Correct)
 	if correct_err2 != nil {
             log.Fatal("Error: the math isn't mathing", correct_err2)
         }
-	
-	if (correct1 == correct2) {
+
+	// compare first by correct count, then time if result is unclear
+	if (correct1 > correct2) {
+		return "+  "
+	} else if (correct1 < correct2) {
+		return "-  "
+	} else {
 		if time1 == time2 {
 			return "!  "
 		} else if time1 < time2 {
@@ -351,12 +384,6 @@ func compare_statistics(user1 Statistic, user2 Statistic) (string) {
 		} else {
 			return "-  "
 		}
-	}
-
-	if (correct1 > correct2) {
-		return "+  "
-	} else {
-		return "-  "
 	}
 }
 
@@ -410,10 +437,9 @@ func pop_to_level (pop int) string {
 	}
 }
 
-
-func populate_statistic(stat *Statistic, user string, i int) (bool) {
+func fetch_leaderboard(pop int) string {
 	// construct temp URL for current level
-	tempURL := LEADERBOARDURL + strconv.Itoa(i) + "/"
+	tempURL := LEADERBOARDURL + strconv.Itoa(pop) + "/"
 	
 	// GET temp URL
 	temp_url_get_response, temp_url_get_response_error := client.Get(tempURL)
@@ -430,14 +456,18 @@ func populate_statistic(stat *Statistic, user string, i int) (bool) {
 	if temp_url_get_response_body_read_error != nil {
 		log.Fatal(temp_url_get_response_body_read_error)
 	}
-	temp_url_get_response_body_text := string(temp_url_get_response_body)
 	
-	// finds user data for current level from temp URL body
+	temp_url_get_response_body_text := string(temp_url_get_response_body)
+	return temp_url_get_response_body_text
+}
+
+func populate_statistic(stat *Statistic, user string, text string) bool {
+	// finds user data for current level from input text
 	regex_for_user := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user))
-	match := regex_for_user.FindStringSubmatch(temp_url_get_response_body_text)
+	match := regex_for_user.FindStringSubmatch(text)
 	
 	// checks if user's name only appears on the friends tab
-	freq := regex_for_user.FindAllString(temp_url_get_response_body_text, -1)
+	freq := regex_for_user.FindAllString(text, -1)
 	
 	// if user's name appears more than once, user is on the leaderboard for this level
 	if len(freq) > 1 {
@@ -445,7 +475,7 @@ func populate_statistic(stat *Statistic, user string, i int) (bool) {
 	}
 	
 	if match != nil {
-		// base stats
+		// if user if found, populate Statistic with base stats
 		stat.Correct = strings.Trim(match[6], ",")
 		stat.Time = strings.Trim(match[2], ",")
 		return true
