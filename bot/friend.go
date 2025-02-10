@@ -12,8 +12,8 @@ import (
 
 var ATTIONURL string
 
-func friend(action int, user string,id string, message *discordgo.MessageCreate, session *discordgo.Session) {
-	// construct friend url
+func friend(action int, user string, id string, message *discordgo.MessageCreate, session *discordgo.Session) {
+	// construct friend URL
 	friendURL := fmt.Sprintf("https://www.101weiqi.com/u/%s/", user)
 
 	// GET friend profile
@@ -24,7 +24,7 @@ func friend(action int, user string,id string, message *discordgo.MessageCreate,
 	defer friend_get_response.Body.Close()
 
 	if friend_get_response.StatusCode != 200 {
-		log.Fatalf("Status code error: %d %s", 	friend_get_response.StatusCode, friend_get_response.Status)
+		log.Fatalf("Status code error: %d %s", friend_get_response.StatusCode, friend_get_response.Status)
 	}
 
 	// find csrftoken
@@ -34,7 +34,7 @@ func friend(action int, user string,id string, message *discordgo.MessageCreate,
 			csrftoken = cookie.Value
 		}
 	}
-	
+
 	if csrftoken == "" {
 		log.Fatal("csrftoken not found on friend's profile page", nil)
 	}
@@ -44,17 +44,17 @@ func friend(action int, user string,id string, message *discordgo.MessageCreate,
 	if friend_html_error != nil {
 		log.Fatal("Error parsing HTML:", friend_html_error)
 	}
-	
+
 	// extract the csrfmiddlewaretoken
 	csrfmiddlewaretoken, found_csrfmiddlewaretoken := friend_html.Find("[name=csrfmiddlewaretoken]").Attr("value")
-	if  found_csrfmiddlewaretoken == false {
+	if found_csrfmiddlewaretoken == false {
 		log.Fatal("Could not parse csrfmiddlewaretoken.", nil)
 	}
 
 	// create form data for POST
-	formData := url.Values {
+	formData := url.Values{
 		"userid":              {id},
-		"attion":              {string(action + '0')}, 
+		"attion":              {string(action + '0')},
 		"csrfmiddlewaretoken": {csrfmiddlewaretoken},
 	}
 
@@ -65,7 +65,7 @@ func friend(action int, user string,id string, message *discordgo.MessageCreate,
 	}
 
 	friend_post_request.Header.Set("Accept-Encoding", "gzip, deflate, br, zstd")
-	friend_post_request.Header.Set("Accept-Language", "en-US,en;q=0.9")	
+	friend_post_request.Header.Set("Accept-Language", "en-US,en;q=0.9")
 	friend_post_request.Header.Set("Cache-Control", "no-cache")
 	friend_post_request.Header.Set("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8")
 	friend_post_request.Header.Set("Origin", "https://www.101weiqi.com")
@@ -79,9 +79,9 @@ func friend(action int, user string,id string, message *discordgo.MessageCreate,
 	// send friend POST request
 	friend_post_response, friend_post_request_error := client.Do(friend_post_request)
 	if friend_post_request_error != nil {
-                log.Fatal("Friend POST request failed.")           
-        } else {
-		if (action == 1) {
+		log.Fatal("Friend POST request failed.")
+	} else {
+		if action == 1 {
 			fmt.Printf("Successfully friended %s!\n", user)
 		} else {
 			fmt.Printf("Successfully unfriended! %s\n", user)
