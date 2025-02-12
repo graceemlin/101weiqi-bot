@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var BOTTOKEN, LOGINURL, HOMEURL string
+var BOTTOKEN, LOGINURL, HOMEURL, CACHEDIR string
 var client *http.Client
 
 func Init() {
@@ -29,6 +29,18 @@ func Init() {
 
 	// initial 101weiqi login
 	login()
+
+	// initialize cache, populate cache
+	cached_friends_map = make(map[string]string)
+	load_friend_cache()
+
+	// initialize skill test caches, populate caches
+	skill_test_caches = make(map[int]string)
+	err := os.MkdirAll(CACHEDIR, 0755)
+	if err != nil {
+		log.Fatal("Error creating cache directory:", err)
+	}
+	load_skill_test_caches()
 }
 
 func Run() {
@@ -66,7 +78,7 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		log.Fatal("Error creating 101weiqi homepage URL object", home_url_object_error)
 	}
 
-	// check for an active session
+	// check for an active 101weiqi session
 	cookies := client.Jar.Cookies(home_url_object)
 	session_active := false
 	for _, cookie := range cookies {
@@ -75,7 +87,7 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		}
 	}
 
-	// restart session if needed
+	// restart 101weiqi session if needed
 	if session_active == false {
 		// note when new sessions are needed
 		fmt.Println("new session")
