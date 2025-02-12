@@ -4,6 +4,5 @@ discord bot for scraping 101weiqi profile data\
 
 
 **to do list**: \
-add caching\
 add graphs (graphs are cool)\
 improve readme
