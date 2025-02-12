@@ -12,7 +12,14 @@ import (
 
 var ATTIONURL string
 
-func friend(action int, user string, id string, message *discordgo.MessageCreate, session *discordgo.Session) {
+type action_type int
+
+const (
+	unfriend action_type = iota
+	add_friend
+)
+
+func friend(action action_type, user string, id string, message *discordgo.MessageCreate, session *discordgo.Session) {
 	// construct friend URL
 	friendURL := fmt.Sprintf("https://www.101weiqi.com/u/%s/", user)
 
@@ -81,12 +88,11 @@ func friend(action int, user string, id string, message *discordgo.MessageCreate
 	if friend_post_request_error != nil {
 		log.Fatal("Friend POST request failed.")
 	} else {
-		if action == 1 {
+		if action == add_friend {
 			fmt.Printf("Successfully friended %s!\n", user)
 		} else {
 			fmt.Printf("Successfully unfriended! %s\n", user)
 		}
 	}
-	
 	defer friend_post_response.Body.Close()
 }
