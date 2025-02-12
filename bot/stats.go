@@ -23,20 +23,60 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 	if strings.HasPrefix(message.Content, "!profile") {
 		// split into command and username
 		parts := strings.Split(message.Content, " ")
-		if len(parts) != 2 {
-			session.ChannelMessageSend(message.ChannelID, "Usage: !profile <101weiqi_username>")
+
+		// handle cache invalidation flag
+		force_invalidation := false
+		if len(parts) == 3 {
+			if parts[2] == "-f" {
+				force_invalidation = true
+			} else {
+				session.ChannelMessageSend(message.ChannelID, "Usage: !profile <101weiqi_username> <flag>")
+				return
+			}
+		} else if len(parts) != 2 {
+			session.ChannelMessageSend(message.ChannelID, "Usage: !profile <101weiqi_username> <flag>")
 			return
 		}
 
-		// check if user profile exists
+		// user from message
 		user := parts[1]
-		is_valid, id := valid_profile(message, session, user)
-		if is_valid == false {
-			return
+
+		var user_id string
+		cached := false
+		cached_id, user_id_is_cached := get_user_id_from_friend_cache(user)
+		if user_id_is_cached == true {
+			// if id is cached, set user_id to cached id
+			user_id = cached_id
+
+			// set cached check to true
+			cached = true
+			// log.Printf("user %s:%s found in cache\n", user, user_id)
+		} else {
+			// check if user profile exists
+			is_valid, id := valid_profile(message, session, user)
+			if is_valid == false {
+				return
+			}
+
+			// set user_id to fetched id
+			user_id = id
+
+			// friend user
+			friend(add_friend, user, id, message, session)
+
+			// add user info to cache
+			add_to_friend_cache(user, user_id)
 		}
 
-		// friend user
-		friend(1, user, id, message, session)
+		// print loading message
+		if force_invalidation == true {
+			invalidation_message := fmt.Sprintf("Fetching updated Skill Test Results for %s.", user)
+			session.ChannelMessageSend(message.ChannelID, invalidation_message)
+			cached = false
+		} else if cached == false {
+			loading_message := fmt.Sprintf("Fetching Skill Test Results for %s.", user)
+			session.ChannelMessageSend(message.ChannelID, loading_message)
+		}
 
 		// set border string
 		profile_stats_border := "===================================================="
@@ -51,27 +91,31 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 		// initialize stats array
 		var user_stats [23]Statistic
 
+		// load leaderboard information
+		pop_to_cached_leaderboard_text := concurrent_leaderboard_retrieval(cached)
+		regex_for_user := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user))
+
 		// fetch stats per level
-		for i := 1; i <= 22; i++ {
+		for pop := 1; pop <= 22; pop++ {
 			var current_line string
 
 			// converts pop level to kyu/dan ranks
-			level := pop_to_level(i)
+			level := pop_to_level(pop)
 
 			// add current level to current line
 			current_line += level + ": " + "\t"
 
 			// maintain alignment
-			if i > 6 {
+			if pop > 6 {
 				current_line += " "
 			}
 
 			// fetch leaderboard text for current level
-			leaderboard_text := fetch_leaderboard(i)
+			leaderboard_text := pop_to_cached_leaderboard_text[pop]
 
 			// populate Statistic struct for current user and level
-			current_statistic := user_stats[i]
-			found := populate_statistic(&current_statistic, user, leaderboard_text)
+			current_statistic := user_stats[pop]
+			found := populate_statistic(&current_statistic, regex_for_user, leaderboard_text)
 			if found == false {
 				// if population fails, indicate the current level was not passed, continue to next level
 				current_line += current_statistic.Correct + "\t\t" + current_statistic.Time + "\n"
@@ -138,25 +182,83 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 	if strings.HasPrefix(message.Content, "!compare") {
 		// split into command and usernames
 		parts := strings.Split(message.Content, " ")
-		if len(parts) != 3 {
-			session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username>  <101weiqi_username>")
+
+		// handle cache invalidation flag
+		force_invalidation := false
+		if len(parts) == 4 {
+			if parts[3] == "-f" {
+				force_invalidation = true
+			} else {
+				session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username>  <101weiqi_username> <flag>")
+				return
+			}
+		} else if len(parts) != 3 {
+			session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username>  <101weiqi_username> <flag>")
 			return
 		}
 
 		user1 := parts[1]
 		user2 := parts[2]
 
-		// check if user profiles exist
-		user1_is_valid, id1 := valid_profile(message, session, user1)
-		user2_is_valid, id2 := valid_profile(message, session, user2)
-		if user1_is_valid == false || user2_is_valid == false {
-			session.ChannelMessageSend(message.ChannelID, "Please try again with two valid 101weiqi usernames")
-			return
+		var user1_id string
+		var user2_id string
+
+		cached_id1, user1_id_is_cached := get_user_id_from_friend_cache(user1)
+		if user1_id_is_cached == true {
+			// if id is cached, set user_id1 to cached_id1
+			user1_id = cached_id1
+		} else {
+			// check if user profiles exist
+			user1_is_valid, id1 := valid_profile(message, session, user1)
+
+			if user1_is_valid == false {
+				session.ChannelMessageSend(message.ChannelID, "Please try again with two valid 101weiqi usernames")
+				return
+			}
+
+			// update user 1 id
+			user1_id = id1
+
+			// friend user 2
+			friend(add_friend, user1, user1_id, message, session)
+
+			// add user 2 info to cache
+			add_to_friend_cache(user1, user1_id)
 		}
 
-		// friend users
-		friend(1, user1, id1, message, session)
-		friend(1, user2, id2, message, session)
+		cached_id2, user2_id_is_cached := get_user_id_from_friend_cache(user2)
+		if user2_id_is_cached == true {
+			// if id is cached, set user_id to cached id
+			user2_id = cached_id2
+		} else {
+			user2_is_valid, id2 := valid_profile(message, session, user2)
+			if user2_is_valid == false {
+				session.ChannelMessageSend(message.ChannelID, "Please try again with two valid 101weiqi usernames")
+				return
+			}
+
+			// update user 2 id
+			user2_id = id2
+
+			// friend user 2
+			friend(add_friend, user2, user2_id, message, session)
+
+			// add user 2 info to cache
+			add_to_friend_cache(user2, user2_id)
+		}
+
+		// cached check is true if both user profiles were previously queried
+		cached := user1_id_is_cached && user2_id_is_cached
+
+		// send loading messages
+		if force_invalidation == true {
+			invalidation_message := fmt.Sprintf("Fetching updated Skill Test Comparison for %s vs %s.", user1, user2)
+			session.ChannelMessageSend(message.ChannelID, invalidation_message)
+			cached = false
+		} else if cached == false {
+			loading_message := fmt.Sprintf("Fetching Skill Test Comparison for %s vs %s.", user1, user2)
+			session.ChannelMessageSend(message.ChannelID, loading_message)
+		}
 
 		// set border string
 		compare_border := "========================================================="
@@ -177,27 +279,31 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		var user1_stats [23]Statistic
 		var user2_stats [23]Statistic
 
+		pop_to_cached_leaderboard_text := concurrent_leaderboard_retrieval(cached)
+		regex_for_user1 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user1))
+		regex_for_user2 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user2))
+
 		// fetch stats per level
-		for i := 1; i <= 22; i++ {
+		for pop := 1; pop <= 22; pop++ {
 			var current_line string
 
 			// converts pop level to kyu/dan ranks
-			level := pop_to_level(i)
+			level := pop_to_level(pop)
 
 			// add level information to the current line
 			current_line += level + ": "
 
 			// maintain alignment
-			if i > 6 {
+			if pop > 6 {
 				current_line += " "
 			}
 
 			// fetch leaderboard text
-			compare_leaderboard_text := fetch_leaderboard(i)
+			compare_leaderboard_text := pop_to_cached_leaderboard_text[pop]
 
 			// populate Statistic struct for user 1
-			current_user1_statistic := user1_stats[i]
-			first_user_found := populate_statistic(&current_user1_statistic, user1, compare_leaderboard_text)
+			current_user1_statistic := user1_stats[pop]
+			first_user_found := populate_statistic(&current_user1_statistic, regex_for_user1, compare_leaderboard_text)
 			if first_user_found == false {
 				current_line += current_user1_statistic.Correct + "   " + current_user1_statistic.Time + "            |"
 			} else {
@@ -236,8 +342,8 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			}
 
 			// populate Statistic struct for user 2
-			current_user2_statistic := user2_stats[i]
-			second_user_found := populate_statistic(&current_user2_statistic, user2, compare_leaderboard_text)
+			current_user2_statistic := user2_stats[pop]
+			second_user_found := populate_statistic(&current_user2_statistic, regex_for_user2, compare_leaderboard_text)
 			if second_user_found == false {
 				current_line += " " + current_user2_statistic.Correct + "   " + current_user2_statistic.Time + "        "
 			} else {
@@ -446,7 +552,15 @@ func pop_to_level(pop int) string {
 	}
 }
 
-func fetch_leaderboard(pop int) string {
+func fetch_leaderboard(cached bool, pop int) string {
+	// check if local copy exists
+	if cached == true {
+		temp_local_text, ok := get_local_leaderboard(pop)
+		if ok == true {
+			return temp_local_text
+		}
+	}
+
 	// construct temp URL for current level
 	tempURL := LEADERBOARDURL + strconv.Itoa(pop) + "/"
 
@@ -467,12 +581,14 @@ func fetch_leaderboard(pop int) string {
 	}
 
 	temp_url_get_response_body_text := string(temp_url_get_response_body)
+
+	// cache current leaderboard text
+	add_to_skill_test_cache(pop, temp_url_get_response_body_text)
 	return temp_url_get_response_body_text
 }
 
-func populate_statistic(stat *Statistic, user string, text string) bool {
+func populate_statistic(stat *Statistic, regex_for_user *regexp.Regexp, text string) bool {
 	// finds user data for current level from input text
-	regex_for_user := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user))
 	match := regex_for_user.FindStringSubmatch(text)
 
 	// checks if user's name only appears on the friends tab
