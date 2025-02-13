@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/bwmarrin/discordgo"
-	"io/ioutil"
 	"log"
 	"regexp"
 	"strconv"
@@ -50,7 +49,6 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 
 			// set cached check to true
 			cached = true
-			// log.Printf("user %s:%s found in cache\n", user, user_id)
 		} else {
 			// check if user profile exists
 			is_valid, id := valid_profile(message, session, user)
@@ -550,41 +548,6 @@ func pop_to_level(pop int) string {
 	} else {
 		return strconv.Itoa(pop-15) + "D"
 	}
-}
-
-func fetch_leaderboard(cached bool, pop int) string {
-	// check if local copy exists
-	if cached == true {
-		temp_local_text, ok := get_local_leaderboard(pop)
-		if ok == true {
-			return temp_local_text
-		}
-	}
-
-	// construct temp URL for current level
-	tempURL := LEADERBOARDURL + strconv.Itoa(pop) + "/"
-
-	// GET temp URL
-	temp_url_get_response, temp_url_get_response_error := client.Get(tempURL)
-	if temp_url_get_response_error != nil {
-		log.Fatal("Error fetching temp URL:", temp_url_get_response_error)
-	}
-	if temp_url_get_response.StatusCode != 200 {
-		log.Fatal("Fetching temp URL gives status code error: %d %s", temp_url_get_response.StatusCode, temp_url_get_response.Status)
-	}
-	defer temp_url_get_response.Body.Close()
-
-	// convert temp URL body to text and return string
-	temp_url_get_response_body, temp_url_get_response_body_read_error := ioutil.ReadAll(temp_url_get_response.Body)
-	if temp_url_get_response_body_read_error != nil {
-		log.Fatal(temp_url_get_response_body_read_error)
-	}
-
-	temp_url_get_response_body_text := string(temp_url_get_response_body)
-
-	// cache current leaderboard text
-	add_to_skill_test_cache(pop, temp_url_get_response_body_text)
-	return temp_url_get_response_body_text
 }
 
 func populate_statistic(stat *Statistic, regex_for_user *regexp.Regexp, text string) bool {
