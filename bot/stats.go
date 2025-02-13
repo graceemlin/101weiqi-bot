@@ -217,10 +217,10 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			// update user 1 id
 			user1_id = id1
 
-			// friend user 2
+			// friend user 1
 			friend(add_friend, user1, user1_id, message, session)
 
-			// add user 2 info to cache
+			// add user 1 info to cache
 			add_to_friend_cache(user1, user1_id)
 		}
 
