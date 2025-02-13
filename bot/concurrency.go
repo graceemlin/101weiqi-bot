@@ -63,12 +63,11 @@ func fetch_leaderboard(cached bool, pop int) string {
 	}
 	defer pop_url_get_response.Body.Close()
 
-	// convert pop URL body to text and return string
+	// convert pop URL GET response body to text
 	pop_url_get_response_body, pop_url_get_response_body_read_error := ioutil.ReadAll(pop_url_get_response.Body)
 	if pop_url_get_response_body_read_error != nil {
 		log.Fatal(pop_url_get_response_body_read_error)
 	}
-
 	pop_url_get_response_body_text := string(pop_url_get_response_body)
 
 	// cache current leaderboard text
