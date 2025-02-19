@@ -4,5 +4,5 @@ discord bot for scraping 101weiqi profile data\
 
 
 **to do list**: \
-add graphs (graphs are cool)\
+slash command migration\
 improve readme
