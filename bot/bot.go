@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var BOTTOKEN, LOGINURL, HOMEURL, CACHEDIR string
+var BOTTOKEN, LOGINURL, HOMEURL, CACHEDIR, HELPMESSAGE string
 var client *http.Client
 
 func Init() {
@@ -116,5 +116,7 @@ func newMessage(session *discordgo.Session, message *discordgo.MessageCreate) {
 		get_profile_stats(message, session)
 	case strings.HasPrefix(message.Content, "!compare"):
 		get_comparison_stats(message, session)
+	case strings.HasPrefix(message.Content, "!help"):
+		session.ChannelMessageSend(message.ChannelID, HELPMESSAGE)
 	}
 }
