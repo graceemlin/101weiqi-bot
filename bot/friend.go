@@ -21,7 +21,8 @@ const (
 
 func friend(action action_type, user string, id string, message *discordgo.MessageCreate, session *discordgo.Session) {
 	// construct friend URL
-	friendURL := fmt.Sprintf("https://www.101weiqi.com/u/%s/", user)
+	encoded_user := url.PathEscape(user)
+	friendURL := fmt.Sprintf("https://www.101weiqi.com/u/%s/", encoded_user)
 
 	// GET friend profile
 	friend_get_response, friend_get_error := client.Get(friendURL)
