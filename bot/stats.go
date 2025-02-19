@@ -23,15 +23,58 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 		// split into command and username
 		parts := strings.Split(message.Content, " ")
 
-		// handle cache invalidation flag
+		// handle cache invalidation, truncate, and graph flags
 		force_invalidation := false
+		truncate_results := false
+		make_graph := false
+
 		if len(parts) == 3 {
-			if parts[2] == "-f" {
-				force_invalidation = true
-			} else {
+			flag := parts[2]
+			if flag[0] != '-' {
 				session.ChannelMessageSend(message.ChannelID, "Usage: !profile <101weiqi_username> <flag>")
 				return
 			}
+
+			// create flag map for duplicate checks
+			flag_used := make(map[string]bool)
+
+			dupe_error := false
+			invalid_error := false
+			for i := 0; i < len(flag); i++ {
+				flag_char := string(flag[i])
+
+				if flag_used[flag_char] == true {
+					dupe_error = true
+					break
+				}
+
+				flag_used[flag_char] = true
+
+				if flag_char == "f" {
+					force_invalidation = true
+				} else if flag_char == "t" {
+					truncate_results = true
+				} else if flag_char == "g" {
+					make_graph = true
+				} else if flag_char != "-" {
+					invalid_error = true
+				}
+			}
+
+			if invalid_error == true || dupe_error == true {
+				session.ChannelMessageSend(message.ChannelID, "Usage: !profile <101weiqi_username> <flag>\n")
+
+				if invalid_error == true {
+					session.ChannelMessageSend(message.ChannelID, "Valid flags only please.\n")
+				}
+
+				if dupe_error == true {
+					session.ChannelMessageSend(message.ChannelID, "Duplicate flags are not allowed!\n")
+				}
+
+				return
+			}
+
 		} else if len(parts) != 2 {
 			session.ChannelMessageSend(message.ChannelID, "Usage: !profile <101weiqi_username> <flag>")
 			return
@@ -91,7 +134,10 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 
 		// load leaderboard information
 		pop_to_cached_leaderboard_text := concurrent_leaderboard_retrieval(cached)
-		regex_for_user := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user))
+
+		// if username contains characters outside of the standard ASCII range, adjust regex query
+		regex_user := encoded_user(user)
+		regex_for_user := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, regex_user))
 
 		// fetch stats per level
 		for pop := 1; pop <= 22; pop++ {
@@ -112,12 +158,15 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 			leaderboard_text := pop_to_cached_leaderboard_text[pop]
 
 			// populate Statistic struct for current user and level
+
+			found := populate_statistic(&user_stats[pop], regex_for_user, leaderboard_text)
 			current_statistic := user_stats[pop]
-			found := populate_statistic(&current_statistic, regex_for_user, leaderboard_text)
 			if found == false {
 				// if population fails, indicate the current level was not passed, continue to next level
 				current_line += current_statistic.Correct + "\t\t" + current_statistic.Time + "\n"
-				results += current_line
+				if truncate_results == false {
+					results += current_line
+				}
 				continue
 			}
 
@@ -153,12 +202,17 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 
 			// new result line for each level
 			current_line += "\n"
-			results += current_line
+			if truncate_results == false {
+				results += current_line
+			}
 		}
 
 		// add tracked stats to the result
-		results += profile_stats_border
-		results += "\n"
+		if truncate_results == false {
+			results += profile_stats_border
+			results += "\n"
+		}
+
 		results += "Highest Level Passed: " + hardest_level_passed + "\n"
 		results += "Perfect Scores: " + strconv.Itoa(perfect_scores) + "\n"
 		results += "Leaderboard Placements: " + strconv.Itoa(placements) + "\n"
@@ -171,6 +225,11 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 		if print_result_error != nil {
 			log.Fatal("Error printing results:", print_result_error)
 		}
+
+		if make_graph == true {
+			graph_create(&user_stats, user, standard)
+			graph_print(user, message, session)
+		}
 	}
 
 	return
@@ -181,15 +240,54 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		// split into command and usernames
 		parts := strings.Split(message.Content, " ")
 
-		// handle cache invalidation flag
+		// handle cache invalidation, truncate, and graph flags
+		make_graph := false
+		truncate_results := false
 		force_invalidation := false
 		if len(parts) == 4 {
-			if parts[3] == "-f" {
-				force_invalidation = true
-			} else {
-				session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username>  <101weiqi_username> <flag>")
+			flag := parts[3]
+			if flag[0] != '-' {
+				session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username> <flag>")
 				return
 			}
+
+			flag_used := make(map[string]bool)
+			dupe_error := false
+			invalid_error := false
+			for i := 0; i < len(flag); i++ {
+				flag_char := string(flag[i])
+
+				if flag_used[flag_char] == true {
+					dupe_error = true
+					break
+				}
+
+				flag_used[flag_char] = true
+
+				if flag_char == "f" {
+					force_invalidation = true
+				} else if flag_char == "t" {
+					truncate_results = true
+				} else if flag_char == "g" {
+					make_graph = true
+				} else if flag_char != "-" {
+					invalid_error = true
+				}
+			}
+
+			if invalid_error == true || dupe_error == true {
+				session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username>  <101weiqi_username> <flag>")
+				if invalid_error == true {
+					session.ChannelMessageSend(message.ChannelID, "Valid flags only please.\n")
+				}
+
+				if dupe_error == true {
+					session.ChannelMessageSend(message.ChannelID, "Duplicate flags are not allowed!\n")
+				}
+
+				return
+			}
+
 		} else if len(parts) != 3 {
 			session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username>  <101weiqi_username> <flag>")
 			return
@@ -278,8 +376,12 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		var user2_stats [23]Statistic
 
 		pop_to_cached_leaderboard_text := concurrent_leaderboard_retrieval(cached)
-		regex_for_user1 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user1))
-		regex_for_user2 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, user2))
+
+		// if username contains characters outside of the standard ASCII range, adjust regex query
+		regex_user1 := encoded_user(user1)
+		regex_user2 := encoded_user(user2)
+		regex_for_user1 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, regex_user1))
+		regex_for_user2 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, regex_user2))
 
 		// fetch stats per level
 		for pop := 1; pop <= 22; pop++ {
@@ -300,8 +402,8 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			compare_leaderboard_text := pop_to_cached_leaderboard_text[pop]
 
 			// populate Statistic struct for user 1
+			first_user_found := populate_statistic(&user1_stats[pop], regex_for_user1, compare_leaderboard_text)
 			current_user1_statistic := user1_stats[pop]
-			first_user_found := populate_statistic(&current_user1_statistic, regex_for_user1, compare_leaderboard_text)
 			if first_user_found == false {
 				current_line += current_user1_statistic.Correct + "   " + current_user1_statistic.Time + "            |"
 			} else {
@@ -340,8 +442,8 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			}
 
 			// populate Statistic struct for user 2
+			second_user_found := populate_statistic(&user2_stats[pop], regex_for_user2, compare_leaderboard_text)
 			current_user2_statistic := user2_stats[pop]
-			second_user_found := populate_statistic(&current_user2_statistic, regex_for_user2, compare_leaderboard_text)
 			if second_user_found == false {
 				current_line += " " + current_user2_statistic.Correct + "   " + current_user2_statistic.Time + "        "
 			} else {
@@ -406,12 +508,17 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			// new result line for each level
 			current_line += "\n"
 
-			// add current line to result
-			compare_results += current_line
+			if truncate_results == false {
+				// add current line to result
+				compare_results += current_line
+			}
 		}
 
 		// construct footer for tracked stats, add dividing column, maintain alignment
-		compare_results += compare_border + "\n"
+		if truncate_results == false {
+			compare_results += compare_border + "\n"
+		}
+
 		footer1 := "Highest Level Passed: " + user1_hardest_level_passed
 		for pad1 := len(footer1); pad1 < 30; pad1++ {
 			footer1 += " "
@@ -448,6 +555,15 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		if print_result_error != nil {
 			log.Fatal("Error printing results:", print_result_error)
 		}
+
+		if make_graph == true {
+			graph_create(&user1_stats, user1, standard)
+			graph_print(user1, message, session)
+
+			graph_create(&user2_stats, user2, standard)
+			graph_print(user2, message, session)
+		}
+
 	}
 
 	return
@@ -573,4 +689,19 @@ func populate_statistic(stat *Statistic, regex_for_user *regexp.Regexp, text str
 		stat.Time = "N/A"
 		return false
 	}
+}
+
+func encoded_user(username string) string {
+	var encoded strings.Builder
+	for _, curr_rune := range username {
+		if curr_rune > 127 {
+			// double escape unicode conversion if outside of ASCII range
+			fmt.Fprintf(&encoded, "\\\\u%04x", curr_rune)
+		} else {
+			// if in ASCII range, keep character the same
+			encoded.WriteRune(curr_rune)
+		}
+
+	}
+	return encoded.String()
 }
