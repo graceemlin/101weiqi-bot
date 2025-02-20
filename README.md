@@ -8,29 +8,31 @@ The bot uses [goquery](https://github.com/PuerkitoBio/goquery) for parsing webpa
 ## Using 101weiqi-bot:
 The following commands have been implemented:
 
-### !profile [user] [flags]
- * scrapes skill test stats for a specified user.
- * tracks and displays relevant user stats (hardest level passed, perfect scores, leaderboard placements).
- * currently supported flags:
-    - **-f** : forces cache invalidation
-    - **-t** : truncates output
-    - **-g** : outputs histogram
-### !compare [user1] [user2] [flags]
- * scrapes skill test stats for both users.
- * tracks and displays skill test stats for both users (hardest level passed, perfect scores, leaderboard placements), as well as comparison stats.
- * utilizes diff syntax highlighting in Discord codeblocks for clearer comparisons and added flair.
- * currently supported flags:
-    - **-f** : forces cache invalidation
-    - **-t** : truncates output
-    - **-g** : outputs histograms for both users
-### !help
- - displays help message
+### `!profile [user] [flags]`
+* Scrapes skill test stats for a specified user.
+* Tracks and displays relevant user stats (hardest level passed, perfect scores, leaderboard placements).
+* Currently supported flags:
+    - `-f : forces cache invalidation`
+    - `-t : truncates output`
+    - `-g : outputs histogram`
+    
+### `!compare [user1] [user2] [flags]`
+* Scrapes skill test stats for both users.
+* Tracks and displays skill test stats for both users (hardest level passed, perfect scores, leaderboard placements), as well as comparison stats.
+* Utilizes diff syntax highlighting in Discord codeblocks for clearer comparisons and added flair.
+* Currently supported flags:
+    - `-f : forces cache invalidation`
+    - `-t : truncates output`
+    - `-g : outputs histograms for both users`
+      
+### `!help`
+* Displays help message.
 
-## changelog
+## Changelog
  * **2025-02-18** : Added simple histograms, updated regex queries to support expanded character sets.
  * **2025-02-11** : Added caching and concurrency to mitigate rate limiting concerns and improve performance.
  * **2025-02-06** : Initial commit. Added login and friend request functions for retrieving skill test results outside of the global top 100.
 
-## to do list:
-- slash command migration
-- improve readme
+## To do list:
+* Slash command migration.
+* Improve README.
