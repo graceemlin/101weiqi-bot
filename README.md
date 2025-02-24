@@ -6,7 +6,7 @@ On 101weiqi, there is no simple way to view another user's results across all [s
 The bot uses [goquery](https://github.com/PuerkitoBio/goquery) for parsing webpages, [discordgo](https://github.com/bwmarrin/discordgo) for interacting with the Discord API, and [gonum](https://github.com/gonum/plot) for data visualization.
 
 # Screenshots
-<img src="https://github.com/graceemlin/101weiqi-bot/blob/main/docs/profile.webp" width=50% height=50%><img src="https://github.com/graceemlin/101weiqi-bot/blob/main/docs/compare.webp" width=49% height=50%>
+<img src="https://github.com/graceemlin/101weiqi-bot/blob/main/docs/profile.webp" width=50% height=50%> <img src="https://github.com/graceemlin/101weiqi-bot/blob/main/docs/compare.webp" width=49% height=50%>
 
 ## Using 101weiqi-bot:
 The following commands have been implemented:
