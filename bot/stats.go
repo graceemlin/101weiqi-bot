@@ -141,8 +141,6 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 
 		// fetch stats per level
 		for pop := 1; pop <= 22; pop++ {
-			var current_line string
-
 			// converts pop level to kyu/dan ranks
 			level := pop_to_level(pop)
 
@@ -150,17 +148,19 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 			leaderboard_text := pop_to_cached_leaderboard_text[pop]
 
 			// populate Statistic struct for current user and level
-
 			found := populate_statistic(&user_stats[pop], regex_for_user, leaderboard_text)
 			current_statistic := user_stats[pop]
 
-			//Add /10 to correct number if not N/A
+			var current_line string
+			// add /10 to correct number if not N/A
 			if current_statistic.Correct != "N/A" {
 				current_statistic.Correct += "/10"
-			}
 
-			//Add statistics to current line
-			current_line = fmt.Sprintf("%-5s\t%-7s\t%-11s", level + ":", current_statistic.Correct, current_statistic.Time + " seconds")
+				// add statistics to current line
+				current_line = fmt.Sprintf("%-5s\t%-7s\t%-11s", level + ":", current_statistic.Correct, current_statistic.Time + " seconds")
+			} else {
+				current_line = fmt.Sprintf("%-5s\t%-7s\t%-11s", level + ":", current_statistic.Correct, current_statistic.Time)
+			}
 
 			if found {
 				// update the  highest level passed
