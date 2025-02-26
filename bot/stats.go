@@ -160,7 +160,7 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 			}
 
 			//Add statistics to current line
-			current_line = fmt.Sprintf("%3S:\t%5S\t%3S seconds", level, current_statistic.Correct, current_statistic.Time)
+			current_line = fmt.Sprintf("%-5s\t%-7s\t%-11s", level + ":", current_statistic.Correct, current_statistic.Time + " seconds")
 
 			if found {
 				// update the  highest level passed
@@ -176,7 +176,7 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 					placements += 1
 
 					// add leaderboard text to results line
-					current_line += "\t(Global Top 100)"
+					current_line += "\t (Global Top 100)"
 				}
 
 			}
