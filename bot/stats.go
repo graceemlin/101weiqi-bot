@@ -146,14 +146,6 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 			// converts pop level to kyu/dan ranks
 			level := pop_to_level(pop)
 
-			// add current level to current line
-			current_line += level + ": " + "\t"
-
-			// maintain alignment
-			if pop > 6 {
-				current_line += " "
-			}
-
 			// fetch leaderboard text for current level
 			leaderboard_text := pop_to_cached_leaderboard_text[pop]
 
@@ -161,43 +153,32 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 
 			found := populate_statistic(&user_stats[pop], regex_for_user, leaderboard_text)
 			current_statistic := user_stats[pop]
-			if found == false {
-				// if population fails, indicate the current level was not passed, continue to next level
-				current_line += current_statistic.Correct + "\t\t" + current_statistic.Time + "\n"
-				if truncate_results == false {
-					results += current_line
+
+			//Add /10 to correct number if not N/A
+			if current_statistic.Correct != "N/A" {
+				current_statistic.Correct += "/10"
+			}
+
+			//Add statistics to current line
+			current_line = fmt.Sprintf("%3S:\t%5S\t%3S seconds", level, current_statistic.Correct, current_statistic.Time)
+
+			if found {
+				// update the  highest level passed
+				hardest_level_passed = level
+
+				// update perfect level count
+				if current_statistic.Correct == "10/10" {
+					perfect_scores += 1
 				}
-				continue
-			}
 
-			// update the  highest level passed
-			hardest_level_passed = level
+				// update leaderboard placement count, and print leaderboard text
+				if current_statistic.Leaderboard == true {
+					placements += 1
 
-			// add solved count to the current line, maintaining alignment
-			current_line += current_statistic.Correct + "/10 " + "\t"
-			for i := len(current_statistic.Correct); i <= 2; i++ {
-				current_line += " "
-			}
+					// add leaderboard text to results line
+					current_line += "\t(Global Top 100)"
+				}
 
-			// add time spent to the result line, maintaining alignment
-			current_line += current_statistic.Time + " seconds"
-
-			// maintain alignment
-			for i := len(current_statistic.Time); i <= 3; i++ {
-				current_line += " "
-			}
-
-			// update perfect level count
-			if current_statistic.Correct == "10" {
-				perfect_scores += 1
-			}
-
-			// update leaderboard placement count, and print leaderboard text
-			if current_statistic.Leaderboard == true {
-				placements += 1
-
-				// add leaderboard text to results line
-				current_line += "\t(Global Top 100)"
 			}
 
 			// new result line for each level
