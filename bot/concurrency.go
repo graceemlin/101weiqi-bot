@@ -5,6 +5,7 @@ import (
 	"log"
 	"strconv"
 	"sync"
+	"time"
 )
 
 func concurrent_leaderboard_retrieval(cached bool) map[int]string {
@@ -55,14 +56,31 @@ func fetch_leaderboard(cached bool, pop int) string {
 
 	// GET pop URL
 	pop_url_get_response, pop_url_get_response_error := client.Get(popURL)
+	if pop_url_get_response_error != nil || pop_url_get_response.StatusCode != 200 {
+		for i := 0; i < 5; i++ {
+			time.Sleep(20 * time.Millisecond)
+			
+			// troubleshooting rate limits
+			log.Println(popURL)
+			log.Println("slept for 20 ms")
+			
+			pop_url_get_response, pop_url_get_response_error = client.Get(popURL)
+			if pop_url_get_response_error == nil && pop_url_get_response.StatusCode == 200 {
+				break
+			}			
+		}
+	}
+	
 	if pop_url_get_response_error != nil {
 		log.Fatal("Error fetching pop URL:", pop_url_get_response_error)
 	}
+	
 	if pop_url_get_response.StatusCode != 200 {
-		log.Fatalf("Fetching pop URL gives status code error: %d %s", pop_url_get_response.StatusCode, pop_url_get_response.Status)
+		log.Fatalf("Fetching pop URL gives status code error: %s %d %s", popURL, pop_url_get_response.StatusCode, pop_url_get_response.Status)
 	}
+	
 	defer pop_url_get_response.Body.Close()
-
+	
 	// convert pop URL GET response body to text
 	pop_url_get_response_body, pop_url_get_response_body_read_error := ioutil.ReadAll(pop_url_get_response.Body)
 	if pop_url_get_response_body_read_error != nil {
