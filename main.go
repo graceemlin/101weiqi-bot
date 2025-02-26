@@ -6,9 +6,9 @@ func main() {
 	bot.BOTTOKEN = "$TOKEN"
 	bot.USERNAME = "$USERNAME"
 	bot.PASSWORD = "$PASSWORD"
-
-  bot.CACHEDIR = "path/to/cachedir"
-  bot.CACHEFILE = "path/to/cachefile"
+	
+	bot.CACHEDIR = "path/to/cachedir"
+	bot.CACHEFILE = "path/to/cachefile"
 	bot.HISTOGRAMFILE = "path/to/histogramfile"
   
 	bot.HELPMESSAGE = "DEFAULT_HELP_MESSAGE"
