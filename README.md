@@ -25,27 +25,27 @@ The bot uses [goquery](https://github.com/PuerkitoBio/goquery) for parsing webpa
    `go run main.go`
 
 ## Using 101weiqi-bot:
-The following commands have been implemented:
+```
+!profile [user] [flags]
+   - Retrieves and analyzes skill test data for any user, providing a comprehensive performance overview for each skill test level.
+   - Displays relevant user statistics for measuring overall performance, including:
+      * Hardest level passed
+      * Perfect scores
+      * Leaderboard placements
 
-### `!profile [user] [flags]`
-* Scrapes skill test stats for a specified user.
-* Tracks and displays relevant user stats (hardest level passed, perfect scores, leaderboard placements).
-* Currently supported flags:
-    - `-f : forces cache invalidation`
-    - `-t : truncates output`
-    - `-g : outputs histogram`
-    
-### `!compare [user1] [user2] [flags]`
-* Scrapes skill test stats for both users.
-* Tracks and displays skill test stats for both users (hardest level passed, perfect scores, leaderboard placements), as well as comparison stats.
-* Utilizes diff syntax highlighting in Discord codeblocks for clearer comparisons and added flair.
-* Currently supported flags:
-    - `-f : forces cache invalidation`
-    - `-t : truncates output`
-    - `-g : outputs histograms for both users`
-      
-### `!help`
-* Displays help message.
+!compare [user1] [user2] [flags]
+   - Compares the skill test data of two users side-by-side, highlighting key differences in performance for each skill test level.
+   - Utilizes diff syntax highlighting in Discord codeblocks for clearer comparisons and added flair.
+   - Tracks head-to-head results and outputs overall performance statistics.
+
+!help
+   - Displays a help message.
+
+Currently supported flags:
+    -f : Forces cache invalidation, ensuring the most up-to-date information is received.
+    -t : Truncates the output to provide a concise summary.
+    -g : Outputs histograms for visualizing performance trends.
+```
 
 ## Changelog
  * **2025-02-18** : Added simple histograms, updated regex queries to support expanded character sets.
