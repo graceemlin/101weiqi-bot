@@ -8,6 +8,22 @@ The bot uses [goquery](https://github.com/PuerkitoBio/goquery) for parsing webpa
 ## Screenshots
 <img src="https://github.com/graceemlin/101weiqi-bot/blob/main/docs/profile.webp" width=50% height=50%> <img src="https://github.com/graceemlin/101weiqi-bot/blob/main/docs/compare.webp" width=49% height=50%>
 
+## Setting up 101weiqi-bot:
+1. Clone the 101weiqi-bot repository from GitHub:\
+   `git clone https://github.com/graceemlin/101weiqi-bot`
+2. Navigate to the project directory on your machine:\
+   `cd 101weiqi-bot`
+3. Initialize the project as a Go module:\
+   `go mod init 101weiqi-bot`
+4. Download dependencies:\
+   `go mod tidy`
+5. Configure main.go:
+    * Credentials: Add your 101weiqi.com username and password.
+    * Discord Bot Token: Add your Discord Bot Token (obtained from the [Discord Developer Portal](https://discord.com/developers/applications)).
+    * Filepath Information: Update filepath information as needed.
+6. Run 101weiqi-bot:\
+   `go run main.go`
+
 ## Using 101weiqi-bot:
 The following commands have been implemented:
 
