@@ -2,12 +2,13 @@ package bot
 
 import (
 	"fmt"
-	"github.com/PuerkitoBio/goquery"
-	"github.com/bwmarrin/discordgo"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/bwmarrin/discordgo"
 )
 
 var LEADERBOARDURL string
@@ -16,7 +17,7 @@ type Statistic struct {
 	Correct     string
 	Time        string
 	Leaderboard bool
-	Top100 	    string
+	Top100      string
 }
 
 type full_data struct {
@@ -157,7 +158,7 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 			current_statistic := user_data.user_stats[pop]
 
 			var current_line string
-			
+
 			// update statistics and strings
 			if found {
 
@@ -412,7 +413,7 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 
 			}
 
-			if second_user_found == false {
+			if second_user_found != false {
 				//update strings and hardest level passed for user 2
 				current_user2_statistic.Correct += "/10"
 				current_user2_statistic.Time += "s"
@@ -450,7 +451,7 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 				leaderboard_user2 = ""
 			}
 
-			current_line = fmt.Sprintf("%-4s%-5s%-7s%-11s%-11s | %-7s%-11s%-11s\n", current_level_comparison, level+":", current_user1_statistic.Correct, current_user1_statistic.Time, leaderboard_user1,
+			current_line = fmt.Sprintf("%-4s%-5s%-7s%-4s%-9s| %-7s%-4s%-9s      \n", current_level_comparison, level+":", current_user1_statistic.Correct, current_user1_statistic.Time, leaderboard_user1,
 				current_user2_statistic.Correct, current_user2_statistic.Time, leaderboard_user2)
 
 			if truncate_results == false {
@@ -465,7 +466,7 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		}
 
 		//add footer to compare_results
-		compare_results += fmt.Sprintf("%-30s| Highest Lvel Passed:%s\n", "Highest Level Passed: "+user1_data.hardest_level_passed, user2_data.hardest_level_passed)
+		compare_results += fmt.Sprintf("%-30s| Highest Level Passed: %s\n", "Highest Level Passed: "+user1_data.hardest_level_passed, user2_data.hardest_level_passed)
 		compare_results += fmt.Sprintf("%-30s| Perfect Scores: %s\n", "Perfect Scores: "+strconv.Itoa(user1_data.perfect_scores), strconv.Itoa(user2_data.perfect_scores))
 		compare_results += fmt.Sprintf("%-30s| Global Leaderboards: %s\n", "Global Leaderboards: "+strconv.Itoa(user1_data.placements), strconv.Itoa(user2_data.placements))
 
@@ -484,7 +485,7 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		// print result
 		_, print_result_error := session.ChannelMessageSend(message.ChannelID, compare_results)
 		if print_result_error != nil {
-			log.Fatal("Error printing results:", print_result_error)
+			log.Fatal("Error printing results:"+compare_results, print_result_error)
 		}
 
 		if make_graph == true {
