@@ -56,7 +56,6 @@ func save_friend_cache() {
 	if temp_friend_cache_error != nil {
 		log.Fatal("Error creating temporary friend cache file:", temp_friend_cache)
 	}
-	defer temp_friend_cache.Close()
 
 	// write updated friend information to the temp file
 	friend_writer := bufio.NewWriter(temp_friend_cache)
@@ -68,12 +67,14 @@ func save_friend_cache() {
 	if friend_write_error != nil {
 		log.Fatal("Error writing to friend file", friend_write_error)
 	}
+	temp_friend_cache.Close()
 
 	// replace the cache file with the temp file
 	friend_rename_error := os.Rename(temp_friend_cache.Name(), CACHEFILE)
 	if friend_rename_error != nil {
 		log.Fatal("Error renaming temporary cache file:", friend_rename_error)
 	}
+
 }
 
 func get_user_id_from_friend_cache(username string) (string, bool) {
@@ -132,13 +133,14 @@ func save_skill_test_cache(pop int, leaderboard_text string) {
 	if temp_skill_test_file_creation_error != nil {
 		log.Fatal("Error creating temporary leaderboard cache file", temp_skill_test_file_creation_error)
 	}
-	defer temp_skill_test_file.Close()
 
 	// write to temp leaderboard cache file
 	_, temp_skill_test_file_write_error := temp_skill_test_file.WriteString(leaderboard_text)
 	if temp_skill_test_file_write_error != nil {
 		log.Fatal("Error writing to temporary leaderboard cache file", temp_skill_test_file_write_error)
 	}
+
+	temp_skill_test_file.Close()
 
 	// replace the cache file with the temp file
 	temp_skill_test_file_rename_error := os.Rename(temp_skill_test_file.Name(), temp_cache)
