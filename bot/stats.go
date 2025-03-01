@@ -132,7 +132,8 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 		profile_stats_border := "===================================================="
 
 		// start the results code block
-		results := fmt.Sprintf("```diff\n%s\nSkill Test Results: %s\n%s\n", profile_stats_border, user, profile_stats_border)
+		var results strings.Builder
+		results.WriteString(fmt.Sprintf("```diff\n%s\nSkill Test Results: %s\n%s\n", profile_stats_border, user, profile_stats_border))
 
 		// initialize full data
 		var user_data full_data
@@ -157,11 +158,8 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 			found := populate_statistic(&user_data.user_stats[pop], regex_for_user, leaderboard_text)
 			current_statistic := user_data.user_stats[pop]
 
-			var current_line string
-
 			// update statistics and strings
 			if found {
-
 				current_statistic.Correct += "/10"
 				current_statistic.Time += " seconds"
 				user_data.hardest_level_passed = level
@@ -176,33 +174,28 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 					user_data.placements += 1
 					current_statistic.Top100 = "(Global Top 100)"
 				}
-
 			}
 
+			var current_line strings.Builder
 			// add statistics to current line
-			current_line = fmt.Sprintf("%-5s\t%-7s\t%-11s\t %16s\n", level+":", current_statistic.Correct, current_statistic.Time, current_statistic.Top100)
+			current_line.WriteString(fmt.Sprintf("%-5s\t%-7s\t%-11s\t %16s\n", level+":", current_statistic.Correct, current_statistic.Time, current_statistic.Top100))
 
 			// new result line for each level
 			if truncate_results == false {
-				results += current_line
+				results.WriteString(current_line.String())
 			}
 		}
 
 		// add tracked stats to the result
 		if truncate_results == false {
-			results += profile_stats_border
-			results += "\n"
+			results.WriteString(profile_stats_border)
+			results.WriteString("\n")
 		}
 
-		results += "Highest Level Passed: " + user_data.hardest_level_passed + "\n"
-		results += "Perfect Scores: " + strconv.Itoa(user_data.perfect_scores) + "\n"
-		results += "Leaderboard Placements: " + strconv.Itoa(user_data.placements) + "\n"
-		results += profile_stats_border
-		results += "\n"
-		results += "```"
+		results.WriteString(fmt.Sprintf("Highest Level Passed: %s\nPerfect Scores: %s\nLeaderboard Placements: %s\n%s\n```", user_data.hardest_level_passed, strconv.Itoa(user_data.perfect_scores), strconv.Itoa(user_data.placements), profile_stats_border))
 
 		// print result
-		_, print_result_error := session.ChannelMessageSend(message.ChannelID, results)
+		_, print_result_error := session.ChannelMessageSend(message.ChannelID, results.String())
 		if print_result_error != nil {
 			log.Fatal("Error printing results:", print_result_error)
 		}
@@ -257,7 +250,7 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			}
 
 			if invalid_error == true || dupe_error == true {
-				session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username>  <101weiqi_username> <flag>")
+				session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username> <101weiqi_username> <flag>")
 				if invalid_error == true {
 					session.ChannelMessageSend(message.ChannelID, "Valid flags only please.\n")
 				}
@@ -270,7 +263,7 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			}
 
 		} else if len(parts) != 3 {
-			session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username>  <101weiqi_username> <flag>")
+			session.ChannelMessageSend(message.ChannelID, "Usage: !compare <101weiqi_username> <101weiqi_username> <flag>")
 			return
 		}
 
@@ -305,7 +298,7 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 
 		cached_id2, user2_id_is_cached := get_user_id_from_friend_cache(user2)
 		if user2_id_is_cached == true {
-			// if id is cached, set user_id to cached id
+			// if id is cached, set user2_id to cached_id2
 			user2_id = cached_id2
 		} else {
 			user2_is_valid, id2 := valid_profile(message, session, user2)
@@ -341,9 +334,9 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		compare_border := "========================================================="
 
 		// start the results code block
-		compare_results := fmt.Sprintf("```diff\n%s\nSkill Test Comparison: %s vs %s\n%s\n", compare_border, user1, user2, compare_border)
+		var compare_results strings.Builder
+		compare_results.WriteString(fmt.Sprintf("```diff\n%s\nSkill Test Comparison: %s vs %s\n%s\n", compare_border, user1, user2, compare_border))
 
-		// initialize tracked stats
 		// initialize full data
 		var user1_data full_data
 		user1_data.hardest_level_passed = "N/A"
@@ -352,7 +345,6 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 
 		// initialize comparison stats
 		var wins, losses, ties, nocontest int
-
 		pop_to_cached_leaderboard_text := concurrent_leaderboard_retrieval(cached)
 
 		// if username contains characters outside of the standard ASCII range, adjust regex query
@@ -363,7 +355,7 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 
 		// fetch stats per level
 		for pop := 1; pop <= 22; pop++ {
-			var current_line string
+			var current_line strings.Builder
 
 			// converts pop level to kyu/dan ranks
 			level := pop_to_level(pop)
@@ -395,7 +387,6 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			}
 
 			if first_user_found != false {
-
 				//update strings and hardest level passed for user 1
 				current_user1_statistic.Correct += "/10"
 				current_user1_statistic.Time += "s"
@@ -411,7 +402,6 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 					user1_data.placements += 1
 					current_user1_statistic.Top100 = "(Global Top 100)"
 				}
-
 			}
 
 			if second_user_found != false {
@@ -432,54 +422,49 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 				}
 			}
 
-			var leaderboard_user1 string
-			var leaderboard_user2 string
+			var leaderboard_user1 strings.Builder
+			var leaderboard_user2 strings.Builder
 
 			if current_user1_statistic.Leaderboard {
-				leaderboard_user1 = " (Top 100)"
+				leaderboard_user1.WriteString(" (Top 100)")
 			} else {
-				leaderboard_user1 = ""
+				leaderboard_user1.WriteString("")
 			}
 			if current_user2_statistic.Leaderboard {
-				leaderboard_user2 = " (Top 100)"
+				leaderboard_user2.WriteString(" (Top 100)")
 			} else {
-				leaderboard_user2 = ""
+				leaderboard_user2.WriteString("")
 			}
 
-			current_line = fmt.Sprintf("%-4s%-5s%-7s%-4s%-11s| %-7s%-4s%-13s\n", current_level_comparison, level+":", current_user1_statistic.Correct, current_user1_statistic.Time, leaderboard_user1, current_user2_statistic.Correct, current_user2_statistic.Time, leaderboard_user2)
+			current_line.WriteString(fmt.Sprintf("%-4s%-5s%-7s%-4s%-11s| %-7s%-4s%-13s\n", current_level_comparison, level+":", current_user1_statistic.Correct, current_user1_statistic.Time, leaderboard_user1.String(), current_user2_statistic.Correct, current_user2_statistic.Time, leaderboard_user2.String()))
 
 			if truncate_results == false {
 				// add current line to result
-				compare_results += current_line
+				compare_results.WriteString(current_line.String())
 			}
 		}
 
 		// construct footer for tracked stats, add dividing column, maintain alignment
 		if truncate_results == false {
-			compare_results += compare_border + "\n"
+			compare_results.WriteString(compare_border)
+			compare_results.WriteString("\n")
 		}
 
 		//add footer to compare_results
-		compare_results += fmt.Sprintf("%-31s| Highest Level Passed: %s\n", "Highest Level Passed: "+user1_data.hardest_level_passed, user2_data.hardest_level_passed)
-		compare_results += fmt.Sprintf("%-31s| Perfect Scores: %s\n", "Perfect Scores: "+strconv.Itoa(user1_data.perfect_scores), strconv.Itoa(user2_data.perfect_scores))
-		compare_results += fmt.Sprintf("%-31s| Global Leaderboards: %s\n", "Global Leaderboards: "+strconv.Itoa(user1_data.placements), strconv.Itoa(user2_data.placements))
+		compare_results.WriteString(fmt.Sprintf("%-31s| Highest Level Passed: %s\n", "Highest Level Passed: "+user1_data.hardest_level_passed, user2_data.hardest_level_passed))
+		compare_results.WriteString(fmt.Sprintf("%-31s| Perfect Scores: %s\n", "Perfect Scores: "+strconv.Itoa(user1_data.perfect_scores), strconv.Itoa(user2_data.perfect_scores)))
+		compare_results.WriteString(fmt.Sprintf("%-31s| Global Leaderboards: %s\n", "Global Leaderboards: "+strconv.Itoa(user1_data.placements), strconv.Itoa(user2_data.placements)))
 
-		//add border
-		compare_results += compare_border + "\n"
+		// add comparison stats
+		comparison_stats := fmt.Sprintf("%s\n+ Wins: %s\n- Losses: %s\n! Ties: %s\n*** No Contest: %s\n```", compare_border, strconv.Itoa(wins), strconv.Itoa(losses), strconv.Itoa(ties), strconv.Itoa(nocontest))
 
-		// print comparison stats
-		compare_results += "+ Wins: " + strconv.Itoa(wins) + "\n"
-		compare_results += "- Losses: " + strconv.Itoa(losses) + "\n"
-		compare_results += "! Ties: " + strconv.Itoa(ties) + "\n"
-		compare_results += "*** No Contest: " + strconv.Itoa(nocontest) + "\n"
-
-		// end codeblock
-		compare_results += "```"
+		// append to compare_results
+		compare_results.WriteString(comparison_stats)
 
 		// print result
-		_, print_result_error := session.ChannelMessageSend(message.ChannelID, compare_results)
+		_, print_result_error := session.ChannelMessageSend(message.ChannelID, compare_results.String())
 		if print_result_error != nil {
-			log.Fatal("Error printing results:"+compare_results, print_result_error)
+			log.Fatal("Error printing results:", print_result_error)
 		}
 
 		if make_graph == true {
