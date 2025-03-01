@@ -8,8 +8,8 @@ func main() {
 	bot.PASSWORD = "$PASSWORD"
 	
 	bot.CACHEDIR = "path/to/cachedir"
-	bot.CACHEFILE = "path/to/cachefile"
-	bot.HISTOGRAMFILE = "path/to/histogramfile"
+	bot.CACHEFILE = "path/to/cachefile.txt"
+	bot.HISTOGRAMFILE = "path/to/histogramfile.png"
   
 	bot.HELPMESSAGE = "DEFAULT_HELP_MESSAGE"
 	
