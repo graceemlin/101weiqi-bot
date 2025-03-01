@@ -178,6 +178,7 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 				}
 
 			}
+
 			// add statistics to current line
 			current_line = fmt.Sprintf("%-5s\t%-7s\t%-11s\t %16s\n", level+":", current_statistic.Correct, current_statistic.Time, current_statistic.Top100)
 
@@ -431,28 +432,21 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 				}
 			}
 
-			// maintain highlight alignment
-			//if current_line_contains_highlight == true {
-			//	for color_alignment := len(current_line); color_alignment < len(compare_border); color_alignment++ {
-			//		current_line += " "
-			//	}
-			//}
 			var leaderboard_user1 string
 			var leaderboard_user2 string
 
 			if current_user1_statistic.Leaderboard {
-				leaderboard_user1 = "(Top 100)"
+				leaderboard_user1 = " (Top 100)"
 			} else {
 				leaderboard_user1 = ""
 			}
 			if current_user2_statistic.Leaderboard {
-				leaderboard_user2 = "(Top 100)"
+				leaderboard_user2 = " (Top 100)"
 			} else {
 				leaderboard_user2 = ""
 			}
 
-			current_line = fmt.Sprintf("%-4s%-5s%-7s%-4s%-9s| %-7s%-4s%-9s      \n", current_level_comparison, level+":", current_user1_statistic.Correct, current_user1_statistic.Time, leaderboard_user1,
-				current_user2_statistic.Correct, current_user2_statistic.Time, leaderboard_user2)
+			current_line = fmt.Sprintf("%-4s%-5s%-7s%-4s%-11s| %-7s%-4s%-13s\n", current_level_comparison, level+":", current_user1_statistic.Correct, current_user1_statistic.Time, leaderboard_user1, current_user2_statistic.Correct, current_user2_statistic.Time, leaderboard_user2)
 
 			if truncate_results == false {
 				// add current line to result
@@ -466,9 +460,9 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		}
 
 		//add footer to compare_results
-		compare_results += fmt.Sprintf("%-30s| Highest Level Passed: %s\n", "Highest Level Passed: "+user1_data.hardest_level_passed, user2_data.hardest_level_passed)
-		compare_results += fmt.Sprintf("%-30s| Perfect Scores: %s\n", "Perfect Scores: "+strconv.Itoa(user1_data.perfect_scores), strconv.Itoa(user2_data.perfect_scores))
-		compare_results += fmt.Sprintf("%-30s| Global Leaderboards: %s\n", "Global Leaderboards: "+strconv.Itoa(user1_data.placements), strconv.Itoa(user2_data.placements))
+		compare_results += fmt.Sprintf("%-31s| Highest Level Passed: %s\n", "Highest Level Passed: "+user1_data.hardest_level_passed, user2_data.hardest_level_passed)
+		compare_results += fmt.Sprintf("%-31s| Perfect Scores: %s\n", "Perfect Scores: "+strconv.Itoa(user1_data.perfect_scores), strconv.Itoa(user2_data.perfect_scores))
+		compare_results += fmt.Sprintf("%-31s| Global Leaderboards: %s\n", "Global Leaderboards: "+strconv.Itoa(user1_data.placements), strconv.Itoa(user2_data.placements))
 
 		//add border
 		compare_results += compare_border + "\n"
