@@ -51,14 +51,12 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 			invalid_error := false
 			for i := 0; i < len(flag); i++ {
 				flag_char := string(flag[i])
-
 				if flag_used[flag_char] == true {
 					dupe_error = true
 					break
 				}
 
 				flag_used[flag_char] = true
-
 				if flag_char == "f" {
 					force_invalidation = true
 				} else if flag_char == "t" {
@@ -96,7 +94,7 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 		cached := false
 		cached_id, user_id_is_cached := get_user_id_from_friend_cache(user)
 		if user_id_is_cached == true {
-			// if id is cached, set user_id to cached id
+			// if id is cached, set user_id to cached_id
 			user_id = cached_id
 
 			// set cached check to true
@@ -230,14 +228,12 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			invalid_error := false
 			for i := 0; i < len(flag); i++ {
 				flag_char := string(flag[i])
-
 				if flag_used[flag_char] == true {
 					dupe_error = true
 					break
 				}
 
 				flag_used[flag_char] = true
-
 				if flag_char == "f" {
 					force_invalidation = true
 				} else if flag_char == "t" {
@@ -280,7 +276,6 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		} else {
 			// check if user profiles exist
 			user1_is_valid, id1 := valid_profile(message, session, user1)
-
 			if user1_is_valid == false {
 				session.ChannelMessageSend(message.ChannelID, "Please try again with two valid 101weiqi usernames")
 				return
@@ -444,13 +439,12 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 			}
 		}
 
-		// construct footer for tracked stats, add dividing column, maintain alignment
 		if truncate_results == false {
 			compare_results.WriteString(compare_border)
 			compare_results.WriteString("\n")
 		}
 
-		//add footer to compare_results
+		// construct footer for tracked stats, add dividing column, maintain alignment
 		compare_results.WriteString(fmt.Sprintf("%-31s| Highest Level Passed: %s\n", "Highest Level Passed: "+user1_data.hardest_level_passed, user2_data.hardest_level_passed))
 		compare_results.WriteString(fmt.Sprintf("%-31s| Perfect Scores: %s\n", "Perfect Scores: "+strconv.Itoa(user1_data.perfect_scores), strconv.Itoa(user2_data.perfect_scores)))
 		compare_results.WriteString(fmt.Sprintf("%-31s| Global Leaderboards: %s\n", "Global Leaderboards: "+strconv.Itoa(user1_data.placements), strconv.Itoa(user2_data.placements)))
