@@ -16,6 +16,7 @@ type Statistic struct {
 	Correct     string
 	Time        string
 	Leaderboard bool
+	Top100 	    string
 }
 
 type full_data struct {
