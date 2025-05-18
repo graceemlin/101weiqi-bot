@@ -59,7 +59,8 @@ Currently supported flags:
 ```
 
 ### Changelog
- * **2025-02-28** : Merged and adjusted @redreoicy's formatting PR. 
+ * **2025-04-29** : 101weiqi-bot is currently non-functional as its data source, 101weiqi.com, is undergoing significant updates. Suspending development of this project until the 101weiqi.com website reaches operational stability.
+ * **2025-02-28** : Merged and adjusted @redreoicy's formatting PR.
  * **2025-02-26** : Added a fetch delay to avoid exceeding rate limits, created a setup section in the README, merged and adjusted @redreoicy's formatting PR. 
  * **2025-02-18** : Added simple histograms, updated regex queries to support expanded character sets.
  * **2025-02-11** : Added caching and concurrency to mitigate rate limiting concerns and improve performance.
