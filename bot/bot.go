@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var BOTTOKEN, LOGINURL, HOMEURL, CACHEDIR, HELPMESSAGE string
+var BOTTOKEN, LOGINURL, LOGINWQURL, HOMEURL, CACHEDIR, HELPMESSAGE string
 var client *http.Client
 
 func Init() {
