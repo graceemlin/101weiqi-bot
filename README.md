@@ -58,7 +58,8 @@ Currently supported flags:
     -g : Outputs histograms for visualizing performance trends.
 ```
 
-### Changelog
+### Changelog 
+ * **2025-11-18** : Unarchived 101weiqi-bot and added support for the updated version of 101weiqi.com.
  * **2025-04-29** : 101weiqi-bot is currently non-functional as its data source, 101weiqi.com, is undergoing significant updates. Suspending development of this project until the 101weiqi.com website reaches operational stability.
  * **2025-02-28** : Merged and adjusted @redreoicy's formatting PR.
  * **2025-02-26** : Added a fetch delay to avoid exceeding rate limits, created a setup section in the README, merged and adjusted @redreoicy's formatting PR. 
