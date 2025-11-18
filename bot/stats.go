@@ -142,8 +142,8 @@ func get_profile_stats(message *discordgo.MessageCreate, session *discordgo.Sess
 
 		// if username contains characters outside of the standard ASCII range, adjust regex query
 		regex_user := encoded_user(user)
-		regex_for_user := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, regex_user))
-
+		regex_for_user := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)`, regex_user))
+		
 		// fetch stats per level
 		for pop := 1; pop <= 22; pop++ {
 			// converts pop level to kyu/dan ranks
@@ -345,8 +345,8 @@ func get_comparison_stats(message *discordgo.MessageCreate, session *discordgo.S
 		// if username contains characters outside of the standard ASCII range, adjust regex query
 		regex_user1 := encoded_user(user1)
 		regex_user2 := encoded_user(user2)
-		regex_for_user1 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, regex_user1))
-		regex_for_user2 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)\s*(\S+)\s+(\S+)`, regex_user2))
+		regex_for_user1 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)`, regex_user1))
+		regex_for_user2 := regexp.MustCompile(fmt.Sprintf(`"%s",\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)`, regex_user2))
 
 		// fetch stats per level
 		for pop := 1; pop <= 22; pop++ {
@@ -586,7 +586,7 @@ func populate_statistic(stat *Statistic, regex_for_user *regexp.Regexp, text str
 	if match != nil {
 		// if user if found, populate Statistic with base stats
 		stat.Correct = strings.Trim(match[6], ",")
-		stat.Time = strings.Trim(match[2], ",")
+		stat.Time = strings.Trim(match[8], ",")
 		return true
 	} else {
 		// no results found for current level, update results line
